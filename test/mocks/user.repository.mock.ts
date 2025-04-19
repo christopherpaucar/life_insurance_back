@@ -29,4 +29,13 @@ export class UserRepositoryMock {
   save<T>(_entity: any, _options?: SaveOptions): Promise<T> {
     return Promise.resolve({} as T)
   }
+
+  createQueryBuilder(_alias?: string): any {
+    return {
+      leftJoin: () => ({}),
+      select: () => ({}),
+      where: () => ({}),
+      getOne: () => Promise.resolve(null),
+    }
+  }
 }

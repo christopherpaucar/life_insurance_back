@@ -11,6 +11,7 @@ export class UserFactory {
       email: 'test@example.com',
       name: 'Test User',
       password: 'hashedPassword',
+      roles: [],
       createdAt: mockDate,
       updatedAt: mockDate,
       deletedAt: mockDate,

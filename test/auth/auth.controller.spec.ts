@@ -5,24 +5,46 @@ import { LoginDto, RegisterDto } from '../../src/auth/dto/auth.dto'
 import { IAuthResponse } from '../../src/common/interfaces/auth.interface'
 import { validate } from 'class-validator'
 import { UserRepositoryMock } from '../mocks/user.repository.mock'
+import { RoleRepositoryMock } from '../mocks/role.repository.mock'
 import { UserFactory } from '../factories/user.factory'
+import { RoleFactory } from '../factories/role.factory'
 import { JwtService } from '@nestjs/jwt'
 import { Repository } from 'typeorm'
 import { User } from '../../src/auth/entities/user.entity'
+import { Role, RoleType } from '../../src/auth/entities/role.entity'
+import { RoleService } from '../../src/auth/services/role.service'
 
 describe('AuthController', () => {
   let authController: AuthController
   let authService: AuthService
   let userRepository: UserRepositoryMock
+  let roleRepository: RoleRepositoryMock
+  let roleService: RoleService
   let jwtService: JwtService
 
   beforeEach(() => {
     userRepository = new UserRepositoryMock()
+    roleRepository = new RoleRepositoryMock()
     jwtService = {
       sign: vi.fn().mockReturnValue('mock-token'),
     } as unknown as JwtService
 
-    authService = new AuthService(userRepository as unknown as Repository<User>, jwtService)
+    roleService = new RoleService(
+      userRepository as unknown as Repository<User>,
+      roleRepository as unknown as Repository<Role>,
+    )
+
+    // Mock roleService methods
+    vi.spyOn(roleService, 'addRoleToUser').mockResolvedValue({
+      success: true,
+      data: {
+        message: 'Role assigned successfully',
+        userId: '1',
+        roles: [RoleFactory.create()],
+      },
+    })
+
+    authService = new AuthService(userRepository as unknown as Repository<User>, jwtService, roleService)
     authController = new AuthController(authService)
   })
 
@@ -32,6 +54,7 @@ describe('AuthController', () => {
       registerDto.email = 'test@example.com'
       registerDto.password = 'Password123!'
       registerDto.name = 'John Doe'
+      registerDto.role = RoleType.CLIENTE
 
       const errors = await validate(registerDto)
       expect(errors).toHaveLength(0)
@@ -42,11 +65,14 @@ describe('AuthController', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'Test User',
+        role: RoleType.CLIENTE,
       }
 
+      const mockRole = RoleFactory.create()
       const mockUser = UserFactory.create({
         email: registerDto.email,
         name: registerDto.name,
+        roles: [mockRole],
       })
 
       const expectedResponse: IAuthResponse = {
@@ -56,6 +82,7 @@ describe('AuthController', () => {
             id: mockUser.id,
             email: mockUser.email,
             name: mockUser.name,
+            roles: [mockRole],
           },
           token: 'mock-token',
         },
@@ -72,6 +99,7 @@ describe('AuthController', () => {
       expect(response.data!.user).toHaveProperty('id')
       expect(response.data!.user).toHaveProperty('email')
       expect(response.data!.user).toHaveProperty('name')
+      expect(response.data!.user).toHaveProperty('roles')
     })
   })
 
@@ -91,9 +119,11 @@ describe('AuthController', () => {
         password: 'password123',
       }
 
+      const mockRole = RoleFactory.create()
       const mockUser = UserFactory.create({
         email: loginDto.email,
         name: 'Test User',
+        roles: [mockRole],
       })
 
       const expectedResponse: IAuthResponse = {
@@ -103,6 +133,7 @@ describe('AuthController', () => {
             id: mockUser.id,
             email: mockUser.email,
             name: mockUser.name,
+            roles: [mockRole],
           },
           token: 'mock-token',
         },
@@ -119,6 +150,7 @@ describe('AuthController', () => {
       expect(response.data!.user).toHaveProperty('id')
       expect(response.data!.user).toHaveProperty('email')
       expect(response.data!.user).toHaveProperty('name')
+      expect(response.data!.user).toHaveProperty('roles')
     })
   })
 })
