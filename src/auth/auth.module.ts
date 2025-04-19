@@ -7,11 +7,14 @@ import { AuthController } from './controllers/auth.controller'
 import { AuthService } from './services/auth.service'
 import { JwtStrategy } from './strategies/jwt.strategy'
 import { User } from './entities/user.entity'
+import { Role } from './entities/role.entity'
+import { RoleService } from './services/role.service'
+import { RoleController } from './controllers/role.controller'
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Role]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -22,8 +25,8 @@ import { User } from './entities/user.entity'
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, ConfigService],
-  exports: [AuthService],
+  controllers: [AuthController, RoleController],
+  providers: [AuthService, JwtStrategy, ConfigService, RoleService],
+  exports: [AuthService, RoleService],
 })
 export class AuthModule {}

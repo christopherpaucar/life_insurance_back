@@ -1,5 +1,6 @@
-import { IsEmail, IsString, MinLength, MaxLength, Matches } from 'class-validator'
+import { IsEmail, IsString, MinLength, MaxLength, Matches, IsEnum } from 'class-validator'
 import { ILoginDto, IRegisterDto } from '../../common/interfaces/auth.interface'
+import { RoleType } from '../entities/role.entity'
 
 export class LoginDto implements ILoginDto {
   @IsEmail({}, { message: 'Por favor, proporciona un email válido' })
@@ -19,4 +20,7 @@ export class RegisterDto extends LoginDto implements IRegisterDto {
   @MinLength(2, { message: 'El nombre debe tener al menos 2 caracteres' })
   @MaxLength(50, { message: 'El nombre no debe exceder 50 caracteres' })
   name: string
+
+  @IsEnum(RoleType, { message: 'El rol debe ser CLIENTE, ADMINISTRADOR, REVISOR o SUPER_ADMIN' })
+  role: RoleType
 }

@@ -25,7 +25,7 @@ const options: DataSourceOptions = {
   synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
   logging: process.env.TYPEORM_LOGGING === 'true',
   entities: ['dist/**/*.entity{.ts,.js}'],
-  migrations: [process.env.TYPEORM_MIGRATIONS || 'dist/migrations/*{.ts,.js}'],
+  migrations: ['dist/migrations/*{.ts,.js}', 'src/migrations/*{.ts,.js}'],
   migrationsRun: process.env.TYPEORM_MIGRATIONS_RUN === 'true',
 }
 
