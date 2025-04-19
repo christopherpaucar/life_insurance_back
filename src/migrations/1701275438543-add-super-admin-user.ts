@@ -5,7 +5,7 @@ import { RoleType } from '../auth/entities/role.entity'
 export class AddSuperAdminUser1701275438543 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create super admin user
-    const passwordHash = await bcrypt.hash('superadmin123', 10)
+    const passwordHash = await bcrypt.hash('12@Lenin', 10)
 
     // Insert the user
     const insertUserResult = await queryRunner.query(
@@ -14,7 +14,7 @@ export class AddSuperAdminUser1701275438543 implements MigrationInterface {
       VALUES (uuid_generate_v4(), $1, $2, $3, NOW(), NOW())
       RETURNING id;
     `,
-      ['superadmin@example.com', 'Super Admin', passwordHash],
+      ['super@super.com', 'Super Admin', passwordHash],
     )
 
     // Get the user id
@@ -48,7 +48,7 @@ export class AddSuperAdminUser1701275438543 implements MigrationInterface {
       `
       DELETE FROM users WHERE email = $1
     `,
-      ['superadmin@example.com'],
+      ['super@super.com'],
     )
   }
 }

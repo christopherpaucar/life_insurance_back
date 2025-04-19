@@ -55,12 +55,13 @@ export class AuthService {
       // Log error but don't fail registration
       console.error('Error assigning role to user', error)
     }
-
-    // Fetch the user with roles
-    const userWithRoles = await this.userRepository.findOne({
-      where: { id: user.id },
-      relations: ['roles'],
-    })
+    // Fetch the user with roles using query builder to select specific attributes
+    const userWithRoles = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.roles', 'role')
+      .select(['user.id', 'user.email', 'user.name', 'role.id', 'role.name', 'role.permissions'])
+      .where('user.id = :id', { id: user.id })
+      .getOne()
 
     if (!userWithRoles) {
       throw new UnauthorizedException({
@@ -89,10 +90,12 @@ export class AuthService {
   }
 
   async login(dto: ILoginDto): Promise<IAuthResponse> {
-    const user = await this.userRepository.findOne({
-      where: { email: dto.email },
-      relations: ['roles'],
-    })
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.roles', 'role')
+      .select(['user', 'role.id', 'role.name', 'role.permissions'])
+      .where('user.email = :email', { email: dto.email })
+      .getOne()
 
     if (!user) {
       throw new UnauthorizedException({
@@ -137,7 +140,6 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       name: user.name,
-      roles: user.roles,
     })
   }
 }
