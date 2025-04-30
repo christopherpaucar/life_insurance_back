@@ -52,7 +52,7 @@ describe('AuthService', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'Test User',
-        role: RoleType.CLIENTE,
+        role: RoleType.CLIENT,
       }
 
       const mockUser = UserFactory.create({
@@ -93,7 +93,7 @@ describe('AuthService', () => {
       expect(result.data?.token).toBe('mock-token')
       expect(roleService.addRoleToUser).toHaveBeenCalledWith({
         userId: mockUser.id,
-        roleType: RoleType.CLIENTE,
+        roleType: RoleType.CLIENT,
       })
     })
 
@@ -102,7 +102,7 @@ describe('AuthService', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'Test User',
-        role: RoleType.CLIENTE,
+        role: RoleType.CLIENT,
       }
 
       const existingUser = UserFactory.create({

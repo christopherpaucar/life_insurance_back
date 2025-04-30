@@ -51,7 +51,7 @@ describe('RoleService', () => {
       const mockRoles = [
         RoleFactory.create({ name: RoleType.SUPER_ADMIN }),
         RoleFactory.create({ name: RoleType.ADMIN }),
-        RoleFactory.create({ name: RoleType.CLIENTE }),
+        RoleFactory.create({ name: RoleType.CLIENT }),
       ]
 
       vi.spyOn(roleRepository, 'find').mockResolvedValue(mockRoles)
@@ -67,11 +67,11 @@ describe('RoleService', () => {
 
   describe('getRoleByType', () => {
     it('should return a role when it exists', async () => {
-      const mockRole = RoleFactory.create({ name: RoleType.CLIENTE })
+      const mockRole = RoleFactory.create({ name: RoleType.CLIENT })
 
       vi.spyOn(roleRepository, 'findOne').mockResolvedValue(mockRole)
 
-      const result = await roleService.getRoleByType(RoleType.CLIENTE)
+      const result = await roleService.getRoleByType(RoleType.CLIENT)
 
       expect(result).toEqual(mockRole)
     })
@@ -79,14 +79,14 @@ describe('RoleService', () => {
     it('should throw NotFoundException when role does not exist', async () => {
       vi.spyOn(roleRepository, 'findOne').mockResolvedValue(null)
 
-      await expect(roleService.getRoleByType(RoleType.CLIENTE)).rejects.toThrow(NotFoundException)
+      await expect(roleService.getRoleByType(RoleType.CLIENT)).rejects.toThrow(NotFoundException)
     })
   })
 
   describe('addRoleToUser', () => {
     it('should add a role to a user successfully', async () => {
       const mockUser = UserFactory.create()
-      const mockRole = RoleFactory.create({ name: RoleType.AGENTE })
+      const mockRole = RoleFactory.create({ name: RoleType.AGENT })
 
       vi.spyOn(userRepository, 'findOne').mockResolvedValue({
         ...mockUser,
@@ -97,7 +97,7 @@ describe('RoleService', () => {
 
       const result = await roleService.addRoleToUser({
         userId: mockUser.id,
-        roleType: RoleType.AGENTE,
+        roleType: RoleType.AGENT,
       })
 
       expect(result.success).toBe(true)
@@ -106,7 +106,7 @@ describe('RoleService', () => {
 
     it('should throw BadRequestException when role is already assigned', async () => {
       const mockUser = UserFactory.create()
-      const mockRole = RoleFactory.create({ name: RoleType.AGENTE })
+      const mockRole = RoleFactory.create({ name: RoleType.AGENT })
 
       vi.spyOn(userRepository, 'findOne').mockResolvedValue({
         ...mockUser,
@@ -117,7 +117,7 @@ describe('RoleService', () => {
       await expect(
         roleService.addRoleToUser({
           userId: mockUser.id,
-          roleType: RoleType.AGENTE,
+          roleType: RoleType.AGENT,
         }),
       ).rejects.toThrow(BadRequestException)
     })
@@ -128,7 +128,7 @@ describe('RoleService', () => {
       await expect(
         roleService.addRoleToUser({
           userId: '99',
-          roleType: RoleType.CLIENTE,
+          roleType: RoleType.CLIENT,
         }),
       ).rejects.toThrow(NotFoundException)
     })
@@ -136,7 +136,7 @@ describe('RoleService', () => {
 
   describe('removeRoleFromUser', () => {
     it('should remove a role from a user successfully', async () => {
-      const mockRole = RoleFactory.create({ name: RoleType.AGENTE })
+      const mockRole = RoleFactory.create({ name: RoleType.AGENT })
       const mockUser = UserFactory.create({
         roles: [mockRole],
       })
@@ -147,7 +147,7 @@ describe('RoleService', () => {
 
       const result = await roleService.removeRoleFromUser({
         userId: mockUser.id,
-        roleType: RoleType.AGENTE,
+        roleType: RoleType.AGENT,
       })
 
       expect(result.success).toBe(true)
@@ -158,7 +158,7 @@ describe('RoleService', () => {
       const mockUser = UserFactory.create({
         roles: [],
       })
-      const mockRole = RoleFactory.create({ name: RoleType.AGENTE })
+      const mockRole = RoleFactory.create({ name: RoleType.AGENT })
 
       vi.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser)
       vi.spyOn(roleService, 'getRoleByType').mockResolvedValue(mockRole)
@@ -166,7 +166,7 @@ describe('RoleService', () => {
       await expect(
         roleService.removeRoleFromUser({
           userId: mockUser.id,
-          roleType: RoleType.AGENTE,
+          roleType: RoleType.AGENT,
         }),
       ).rejects.toThrow(BadRequestException)
     })

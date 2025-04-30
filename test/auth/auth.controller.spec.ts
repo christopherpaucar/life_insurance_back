@@ -54,7 +54,7 @@ describe('AuthController', () => {
       registerDto.email = 'test@example.com'
       registerDto.password = 'Password123!'
       registerDto.name = 'John Doe'
-      registerDto.role = RoleType.CLIENTE
+      registerDto.role = RoleType.CLIENT
 
       const errors = await validate(registerDto)
       expect(errors).toHaveLength(0)
@@ -65,7 +65,7 @@ describe('AuthController', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'Test User',
-        role: RoleType.CLIENTE,
+        role: RoleType.CLIENT,
       }
 
       const mockRole = RoleFactory.create()
