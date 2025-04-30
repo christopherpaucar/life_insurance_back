@@ -17,8 +17,9 @@ This is a NestJS backend application for a life insurance management system.
 
 - Node.js (v22 or higher)
 - PostgreSQL (v16 or higher)
+- Docker and Docker Compose (optional, for containerized database)
 
-### Installation
+### Step-by-Step Setup Guide
 
 1. Clone the repository:
    ```bash
@@ -33,31 +34,49 @@ This is a NestJS backend application for a life insurance management system.
 
 3. Create a `.env` file in the root of the project with the following variables:
    ```
-   # Database
+   # Database Configuration
    DB_HOST=localhost
    DB_PORT=5432
    DB_USERNAME=postgres
    DB_PASSWORD=postgres
    DB_NAME=life_insurance
+   DB_SSL=false
 
-   # JWT
+   # Application Configuration
+   PORT=3000
+   NODE_ENV=development 
+
+   # Auth
    JWT_SECRET=your-secret-key
-   JWT_EXPIRATION_TIME=1d
 
-   # TypeORM
-   TYPEORM_SYNCHRONIZE=false
-   TYPEORM_LOGGING=true
-   TYPEORM_MIGRATIONS_RUN=false
+   # Storage
+   STORAGE_TYPE=s3
+
+   # AWS Credentials (replace with your actual credentials)
+   AWS_ACCESS_KEY_ID=your-access-key-id
+   AWS_SECRET_ACCESS_KEY=your-secret-access-key
+   AWS_REGION=us-east-1
+   AWS_BUCKET=life-insurance-bucket
    ```
 
-4. Build the application:
+4. Start the PostgreSQL database with Docker:
+   ```bash
+   docker compose up -d
+   ```
+
+5. Build the application:
    ```bash
    npm run build
    ```
 
-5. Run database migrations:
+6. Run database migrations:
    ```bash
    npm run migration:run
+   ```
+
+7. Start the application:
+   ```bash
+   npm run start:dev
    ```
 
 ### Running the Application
