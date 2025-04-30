@@ -30,9 +30,9 @@ export class AddInitialRoles1701275438542 implements MigrationInterface {
     const descriptions = {
       [RoleType.SUPER_ADMIN]: 'Super administrador con acceso completo al sistema',
       [RoleType.ADMIN]: 'Administrador con acceso a gestión de usuarios y seguros',
-      [RoleType.REVISOR]: 'Revisor de solicitudes de reembolso',
-      [RoleType.CLIENTE]: 'Cliente del sistema de seguros',
-      [RoleType.AGENTE]: 'Agente de ventas y servicio al cliente',
+      [RoleType.REVIEWER]: 'Revisor de solicitudes de reembolso',
+      [RoleType.CLIENT]: 'Cliente del sistema de seguros',
+      [RoleType.AGENT]: 'Agente de ventas y servicio al cliente',
     }
 
     return descriptions[roleType] || `Rol ${roleType}`

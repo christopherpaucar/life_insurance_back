@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core'
 import { RoleService } from '../services/role.service'
 import { PERMISSION_KEY } from '../decorators/require-permission.decorator'
 import { Role } from '../entities/role.entity'
+import { PermissionType } from '../decorators/require-permission.decorator'
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -12,7 +13,7 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredPermission = this.reflector.getAllAndOverride<string>(PERMISSION_KEY, [
+    const requiredPermission = this.reflector.getAllAndOverride<PermissionType>(PERMISSION_KEY, [
       context.getHandler(),
       context.getClass(),
     ])

@@ -44,7 +44,7 @@ export class AuthService {
     await this.userRepository.save(user)
 
     // Then assign the default role (or specified role if valid)
-    const roleType = dto.role && Object.values(RoleType).includes(dto.role) ? dto.role : RoleType.CLIENTE
+    const roleType = dto.role && Object.values(RoleType).includes(dto.role) ? dto.role : RoleType.CLIENT
 
     try {
       await this.roleService.addRoleToUser({

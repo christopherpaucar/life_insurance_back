@@ -5,6 +5,7 @@ import { User } from '../entities/user.entity'
 import { Role, RoleType, DEFAULT_PERMISSIONS, ALL_PERMISSIONS } from '../entities/role.entity'
 import { IAddRoleDto, IRemoveRoleDto } from '../../common/interfaces/auth.interface'
 import { ApiResponseDto } from '../../common/dto/api-response.dto'
+import { PermissionType } from '../decorators/require-permission.decorator'
 
 @Injectable()
 export class RoleService {
@@ -270,33 +271,20 @@ export class RoleService {
   }
 
   // Utility method to check if user has permission
-  hasPermission(userRoles: Role[], requiredPermission: string): boolean {
-    // If no roles, no permissions
-    if (!userRoles || userRoles.length === 0) {
-      return false
-    }
-
-    // Check each role for the permission
+  hasPermission(userRoles: Role[], requiredPermission: PermissionType): boolean {
+    // Check if any of the user's roles has the required permission
     return userRoles.some((role) => {
-      // Super admin has all permissions
-      if (role.name === RoleType.SUPER_ADMIN) {
-        return true
+      // Check for "all" permissions first
+      if (role.permissions && (role.permissions.includes('all:manage') || role.permissions.includes('all:read'))) {
+        // All-access for specific action types
+        const actionType = requiredPermission.split(':')[1]
+        if (role.permissions.includes(`all:${actionType}`)) {
+          return true
+        }
       }
 
-      // Check specific permissions
-      return (
-        role.permissions &&
-        role.permissions.some((permission) => {
-          // Direct match
-          if (permission === requiredPermission) {
-            return true
-          }
-
-          // All permission in a category (e.g., 'user:*' matches 'user:create')
-          const permissionCategory = requiredPermission.split(':')[0]
-          return permission === `${permissionCategory}:*` || permission === 'all:*' || permission === 'all:manage'
-        })
-      )
+      // Direct permission check
+      return role.permissions && role.permissions.includes(requiredPermission)
     })
   }
 }

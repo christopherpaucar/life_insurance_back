@@ -4,6 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './auth/auth.module'
+import { InsuranceModule } from './insurance/insurance.module'
+import { ClientModule } from './client/client.module'
+import { ContractModule } from './contract/contract.module'
+import { ReimbursementModule } from './reimbursement/reimbursement.module'
+import { FileStorageModule } from './common/file-storage.module'
 
 @Module({
   imports: [
@@ -27,6 +32,11 @@ import { AuthModule } from './auth/auth.module'
       }),
     }),
     AuthModule,
+    InsuranceModule,
+    ClientModule,
+    ContractModule,
+    ReimbursementModule,
+    FileStorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

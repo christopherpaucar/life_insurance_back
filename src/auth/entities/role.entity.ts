@@ -1,12 +1,13 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
+import { User } from './user.entity'
 
 export enum RoleType {
   SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMINISTRADOR',
-  REVISOR = 'REVISOR',
-  CLIENTE = 'CLIENTE',
-  AGENTE = 'AGENTE',
+  REVIEWER = 'REVISOR',
+  CLIENT = 'CLIENTE',
+  AGENT = 'AGENTE',
 }
 
 // Define default permissions for each role
@@ -38,7 +39,7 @@ export const DEFAULT_PERMISSIONS = {
     'reimbursement:reject',
     'report:view',
   ],
-  [RoleType.AGENTE]: [
+  [RoleType.AGENT]: [
     'client:read',
     'client:create',
     'client:update',
@@ -51,14 +52,14 @@ export const DEFAULT_PERMISSIONS = {
     'reimbursement:reject',
     'report:view',
   ],
-  [RoleType.REVISOR]: [
+  [RoleType.REVIEWER]: [
     'client:read',
     'contract:read',
     'reimbursement:read',
     'reimbursement:approve',
     'reimbursement:reject',
   ],
-  [RoleType.CLIENTE]: [
+  [RoleType.CLIENT]: [
     'contract:read',
     'contract:sign',
     'contract:upload',
@@ -133,7 +134,7 @@ export class Role extends BaseEntity {
   @Column({
     type: 'enum',
     enum: RoleType,
-    default: RoleType.CLIENTE,
+    default: RoleType.CLIENT,
     unique: true,
   })
   name: RoleType
@@ -143,4 +144,12 @@ export class Role extends BaseEntity {
 
   @Column({ type: 'json', nullable: true })
   permissions: string[]
+
+  @ManyToMany(() => User, (user) => user.roles)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'role_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
+  })
+  users: User[]
 }
