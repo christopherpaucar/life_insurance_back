@@ -9,7 +9,7 @@ services:
     ports:
       - '${DB_PORT:-5432}:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - life_insurance_data:/var/lib/postgresql/data
     networks:
       - life_insurance_network
     healthcheck:
@@ -18,8 +18,23 @@ services:
       timeout: 5s
       retries: 5
 
+  sonarqube:
+    image: sonarqube:latest
+    container_name: life_insurance_sonarqube
+    ports:
+      - '${SONARQUBE_PORT:-9000}:9000'
+    networks:
+      - life_insurance_network
+    environment:
+      - SONARQUBE_JDBC_USERNAME=${SONARQUBE_JDBC_USERNAME:-sonar}
+      - SONARQUBE_JDBC_PASSWORD=${SONARQUBE_JDBC_PASSWORD:-sonar}
+      - SONARQUBE_JDBC_URL=${SONARQUBE_JDBC_URL:-jdbc:postgresql://postgres:5432/sonar}
+    volumes:
+      - life_insurance_sonarqube_data:/opt/sonarqube/data
+
 volumes:
-  postgres_data:
+  life_insurance_data:
+  life_insurance_sonarqube_data:
 
 networks:
   life_insurance_network:
