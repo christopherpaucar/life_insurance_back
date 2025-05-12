@@ -116,7 +116,13 @@ After running migrations, a default super admin user is created:
 - `npm run migration:generate`: Generate a migration based on entity changes
 - `npm run migration:run`: Run pending migrations
 - `npm run migration:revert`: Revert the last migration
+- `npm run sonar:analyze`: Run SonarQube analysis
 
-## License
+## SonarQube Analysis
 
-This project is licensed under the UNLICENSED License - see the LICENSE file for details.
+To run SonarQube analysis, you need to set the `SONAR_TOKEN` environment variable.
+
+```bash
+chmod +x run-sonar.sh
+./run-sonar.sh <your-sonar-token>
+```

@@ -8,4 +8,4 @@ if [ -z "$1" ]; then
 fi
 
 # Run SonarQube analysis with the provided token
-SONAR_TOKEN=$1 npm run sonar:analyze 
+SONAR_TOKEN=$1 npm run sonar:analyze

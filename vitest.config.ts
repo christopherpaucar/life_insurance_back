@@ -13,10 +13,10 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./test/vitest.setup.ts'],
-    include: ['test/**/*.spec.ts'],
+    include: ['test/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'lcov'],
       exclude: [
         'coverage/**',
         'dist/**',

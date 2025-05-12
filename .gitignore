@@ -17,3 +17,6 @@ dist
 # SonarQube
 .sonar
 .scannerwork
+
+# Coverage
+coverage
