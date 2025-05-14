@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { IsNull, Not, Repository } from 'typeorm'
 import { Client } from '../entities/client.entity'
 import { CreateClientDto } from '../dto/create-client.dto'
 import { UpdateClientDto } from '../dto/update-client.dto'
@@ -47,7 +47,7 @@ export class ClientService {
       skip,
       take: limit,
       where: {
-        isActive: query.includeInactive ? undefined : true,
+        deletedAt: query.includeInactive ? Not(IsNull()) : IsNull(),
       },
       relations: ['user'],
       order: { createdAt: 'DESC' },
@@ -76,9 +76,7 @@ export class ClientService {
   }
 
   async remove(id: string): Promise<void> {
-    const client = await this.findOne(id)
-    client.isActive = false
-    await this.clientRepository.save(client)
+    await this.clientRepository.softDelete(id)
   }
 
   async linkUserAccount(clientId: string, userId: string): Promise<Client> {

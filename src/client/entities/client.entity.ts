@@ -28,9 +28,6 @@ export class Client extends BaseEntity {
   @Column({ nullable: true })
   identificationDocumentUrl: string
 
-  @Column({ default: true })
-  isActive: boolean
-
   @OneToOne(() => User, { nullable: true })
   @JoinColumn()
   user: User

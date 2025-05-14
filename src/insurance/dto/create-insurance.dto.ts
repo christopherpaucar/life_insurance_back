@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator'
+import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator'
 import { InsuranceType, PaymentFrequency } from '../entities/insurance.entity'
 
 export class CreateInsuranceDto {
@@ -15,10 +15,6 @@ export class CreateInsuranceDto {
 
   @IsNumber()
   basePrice: number
-
-  @IsBoolean()
-  @IsOptional()
-  isActive: boolean
 
   @IsArray()
   @IsOptional()

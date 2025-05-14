@@ -31,9 +31,6 @@ export class Insurance extends BaseEntity {
   @Column('decimal', { precision: 10, scale: 2 })
   basePrice: number
 
-  @Column({ default: true })
-  isActive: boolean
-
   @Column('json', { nullable: true })
   requirements: string[]
 

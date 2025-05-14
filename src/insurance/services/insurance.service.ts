@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, In } from 'typeorm'
+import { Repository, In, Not, IsNull } from 'typeorm'
 import { Insurance } from '../entities/insurance.entity'
 import { CreateInsuranceDto } from '../dto/create-insurance.dto'
 import { UpdateInsuranceDto } from '../dto/update-insurance.dto'
@@ -22,19 +22,18 @@ export class InsuranceService {
 
   async findAll(query): Promise<PaginatedResponse<Insurance>> {
     const paginationDto: PaginationDto = {
-      page: query.page ? parseInt(query.page, 10) : 1,
-      limit: query.limit ? parseInt(query.limit, 10) : 10,
+      page: query.page ? parseInt(query.page as string, 10) : 1,
+      limit: query.limit ? parseInt(query.limit as string, 10) : 10,
     }
 
     const where = {
-      isActive: query.includeInactive ? undefined : true,
+      deletedAt: query.includeInactive ? Not(IsNull()) : IsNull(),
     }
 
     const order = { createdAt: 'DESC' as const }
 
     const result = await PaginationService.paginate(this.insuranceRepository, where, paginationDto, order)
 
-    // Load relations after pagination
     if (result.data.length > 0) {
       result.data = await this.insuranceRepository.find({
         where: { id: In(result.data.map((insurance) => insurance.id)) },
@@ -65,8 +64,6 @@ export class InsuranceService {
   }
 
   async remove(id: string): Promise<void> {
-    const insurance = await this.findOne(id)
-    insurance.isActive = false
-    await this.insuranceRepository.save(insurance)
+    await this.insuranceRepository.softDelete(id)
   }
 }
