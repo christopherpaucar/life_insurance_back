@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
@@ -10,6 +10,7 @@ import { User } from './entities/user.entity'
 import { Role } from './entities/role.entity'
 import { RoleService } from './services/role.service'
 import { RoleController } from './controllers/role.controller'
+import { ClientModule } from '../client/client.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RoleController } from './controllers/role.controller'
       }),
       inject: [ConfigService],
     }),
+    forwardRef(() => ClientModule),
   ],
   controllers: [AuthController, RoleController],
   providers: [AuthService, JwtStrategy, ConfigService, RoleService],

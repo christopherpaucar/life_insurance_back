@@ -52,3 +52,10 @@ export interface IRemoveRoleDto {
   userId: string
   roleType: string
 }
+
+export interface ICreateUserDto {
+  email: string
+  name: string
+  roleType: RoleType
+  temporaryPassword: string
+}

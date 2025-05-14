@@ -54,4 +54,20 @@ export class ClientController {
     await this.clientService.remove(id)
     return new ApiResponseDto({ success: true })
   }
+
+  @Post(':id/link-user/:userId')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @RequirePermission('client:update')
+  async linkUserAccount(@Param('id') id: string, @Param('userId') userId: string): Promise<ApiResponseDto> {
+    const client = await this.clientService.linkUserAccount(id, userId)
+    return new ApiResponseDto({ success: true, data: client })
+  }
+
+  @Post(':id/unlink-user')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @RequirePermission('client:update')
+  async unlinkUserAccount(@Param('id') id: string): Promise<ApiResponseDto> {
+    const client = await this.clientService.unlinkUserAccount(id)
+    return new ApiResponseDto({ success: true, data: client })
+  }
 }

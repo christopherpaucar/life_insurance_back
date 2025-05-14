@@ -31,7 +31,7 @@ export class Client extends BaseEntity {
   @Column({ default: true })
   isActive: boolean
 
-  @OneToOne(() => User)
+  @OneToOne(() => User, { nullable: true })
   @JoinColumn()
   user: User
 
