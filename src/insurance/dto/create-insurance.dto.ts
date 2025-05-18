@@ -24,4 +24,8 @@ export class CreateInsuranceDto {
   @IsEnum(PaymentFrequency, { each: true })
   @IsOptional()
   availablePaymentFrequencies: PaymentFrequency[]
+
+  @IsNumber()
+  @IsOptional()
+  rank: number
 }

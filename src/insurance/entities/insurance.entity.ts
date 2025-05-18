@@ -34,6 +34,9 @@ export class Insurance extends BaseEntity {
   @Column('json', { nullable: true })
   requirements: string[]
 
+  @Column('int', { default: 0 })
+  rank: number
+
   @Column({
     type: 'enum',
     enum: PaymentFrequency,

@@ -30,7 +30,7 @@ export class InsuranceService {
       deletedAt: query.includeInactive ? Not(IsNull()) : IsNull(),
     }
 
-    const order = { createdAt: 'DESC' as const }
+    const order = { rank: 'DESC' as const, createdAt: 'DESC' as const }
 
     const result = await PaginationService.paginate(this.insuranceRepository, where, paginationDto, order)
 
