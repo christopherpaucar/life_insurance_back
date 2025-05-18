@@ -67,6 +67,7 @@ export const DEFAULT_PERMISSIONS = {
     'reimbursement:create',
     'reimbursement:read',
     'reimbursement:upload',
+    'insurance:read',
   ],
 }
 
