@@ -14,10 +14,6 @@ export enum RoleType {
 export const DEFAULT_PERMISSIONS = {
   [RoleType.SUPER_ADMIN]: ['all:create', 'all:read', 'all:update', 'all:delete', 'all:manage'],
   [RoleType.ADMIN]: [
-    'user:read',
-    'user:create',
-    'user:update',
-    'user:delete',
     'role:read',
     'role:create',
     'role:update',
@@ -73,12 +69,6 @@ export const DEFAULT_PERMISSIONS = {
 
 // List all available permissions in the system
 export const ALL_PERMISSIONS = [
-  // User management
-  'user:create',
-  'user:read',
-  'user:update',
-  'user:delete',
-
   // Role management
   'role:create',
   'role:read',
