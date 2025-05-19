@@ -94,16 +94,14 @@ export class ContractService {
       .take(limit)
       .orderBy('contract.createdAt', 'DESC')
 
-    // Apply filters if provided
     if (query.status) {
-      queryBuilder.andWhere('contract.status = :status', { status: query.status })
+      queryBuilder.andWhere('contract.status = :status', { status: query.status.toLowerCase() })
     }
 
     if (query.clientId) {
       queryBuilder.andWhere('contract.client_id = :clientId', { clientId: query.clientId })
     }
 
-    // Check for due payments
     if (query.hasDuePayments === 'true') {
       queryBuilder.andWhere('payments.status = :paymentStatus', { paymentStatus: PaymentStatus.OVERDUE })
     }
