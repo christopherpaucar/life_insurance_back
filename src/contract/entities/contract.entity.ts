@@ -10,6 +10,7 @@ import { Payment } from './payment.entity'
 export enum ContractStatus {
   DRAFT = 'draft',
   PENDING_SIGNATURE = 'pending_signature',
+  PENDING_BASIC_DOCUMENTS = 'pending_basic_documents',
   ACTIVE = 'active',
   EXPIRED = 'expired',
   CANCELLED = 'cancelled',

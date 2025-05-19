@@ -12,6 +12,8 @@ import { PaymentService } from './payment.service'
 import { SignatureService } from './signature.service'
 import { format } from 'date-fns'
 import { ClientService } from '../../client/services/client.service'
+import { User } from '../../auth/entities/user.entity'
+import { RoleType } from '../../auth/entities/role.entity'
 
 @Injectable()
 export class ContractService {
@@ -78,9 +80,13 @@ export class ContractService {
     return this.findOne(savedContract.id)
   }
 
-  async findAll(query): Promise<{ contracts: Contract[]; total: number; page: number; limit: number }> {
-    const page = query.page ? parseInt(query.page, 10) : 1
-    const limit = query.limit ? parseInt(query.limit, 10) : 10
+  async findAll(query, user: User): Promise<{ contracts: Contract[]; total: number; page: number; limit: number }> {
+    if (user.roles[0].name === RoleType.CLIENT) {
+      query.userId = user.id
+    }
+
+    const page = query.page ? parseInt(query.pages as string, 10) : 1
+    const limit = query.limit ? parseInt(query.limit as string, 10) : 10
     const skip = (page - 1) * limit
 
     const queryBuilder = this.contractRepository
@@ -106,6 +112,10 @@ export class ContractService {
       queryBuilder.andWhere('payments.status = :paymentStatus', { paymentStatus: PaymentStatus.OVERDUE })
     }
 
+    if (query.userId) {
+      queryBuilder.andWhere('client.userId = :userId', { userId: query.userId })
+    }
+
     const [contracts, total] = await queryBuilder.getManyAndCount()
 
     return { contracts, total, page, limit }
@@ -127,12 +137,10 @@ export class ContractService {
   async update(id: string, updateContractDto: UpdateContractDto): Promise<Contract> {
     const contract = await this.findOne(id)
 
-    // Don't allow updates for signed contracts
-    if (contract.status !== ContractStatus.DRAFT) {
-      throw new BadRequestException('Cannot update a contract that is not in draft status')
+    if (contract.status === ContractStatus.ACTIVE) {
+      throw new BadRequestException('Cannot update a contract that is active')
     }
 
-    // Update basic contract info
     const updatedContract = Object.assign(contract, {
       ...updateContractDto,
       payments: contract.payments,
@@ -140,23 +148,17 @@ export class ContractService {
       attachments: contract.attachments,
     })
 
-    // Update beneficiaries if provided
     if (updateContractDto.beneficiaries && updateContractDto.beneficiaries.length > 0) {
-      // Delete existing beneficiaries
       await this.beneficiaryRepository.delete({ contract: { id } })
 
-      // Create new beneficiaries
       const beneficiaries = updateContractDto.beneficiaries.map((beneficiary) => {
-        // Split the name into firstName and lastName
         const nameParts = (beneficiary.name || '').split(' ')
         const firstName = nameParts[0] || ''
         const lastName = nameParts.slice(1).join(' ') || ''
 
-        // Map the string relationship to RelationshipType enum
         const relationshipStr = (beneficiary.relationship || '').toLowerCase()
         let relationship = RelationshipType.OTHER
 
-        // Check if the relationship string is a valid enum value
         if (Object.values(RelationshipType).includes(relationshipStr as RelationshipType)) {
           relationship = relationshipStr as RelationshipType
         }
@@ -176,17 +178,16 @@ export class ContractService {
       await this.beneficiaryRepository.save(beneficiaries)
     }
 
-    // Re-generate payment schedule if payment details changed
     if (
       updateContractDto.paymentFrequency !== contract.paymentFrequency ||
-      format(updateContractDto.startDate ?? new Date(), 'yyyy-MM-dd') !== format(contract.startDate, 'yyyy-MM-dd') ||
-      format(updateContractDto.endDate ?? new Date(), 'yyyy-MM-dd') !== format(contract.endDate, 'yyyy-MM-dd') ||
+      (updateContractDto.startDate &&
+        format(new Date(updateContractDto.startDate), 'yyyy-MM-dd') !== format(contract.startDate, 'yyyy-MM-dd')) ||
+      (updateContractDto.endDate &&
+        format(new Date(updateContractDto.endDate), 'yyyy-MM-dd') !== format(contract.endDate, 'yyyy-MM-dd')) ||
       updateContractDto.totalAmount !== contract.totalAmount
     ) {
-      // Delete existing payments
       await this.paymentService.deletePaymentsForContract(id)
 
-      // Re-generate payment schedule
       await this.paymentService.generatePaymentSchedule(updatedContract)
     }
 
@@ -196,20 +197,16 @@ export class ContractService {
   async signContract(id: string, signContractDto: SignContractDto): Promise<Contract> {
     const contract = await this.findOne(id)
 
-    // Verify the contract is ready for signature
     if (contract.status !== ContractStatus.PENDING_SIGNATURE) {
       throw new BadRequestException('Contract must be in PENDING_SIGNATURE status to be signed')
     }
 
-    // Process signature using signature service
     const signatureUrl = await this.signatureService.processSignature(signContractDto.signatureData)
 
-    // Update contract with signature information
     contract.signatureUrl = signatureUrl
     contract.signedAt = new Date()
     contract.status = ContractStatus.ACTIVE
 
-    // Create a contract document attachment
     const contractAttachment = this.attachmentRepository.create({
       fileName: `Contract_${contract.contractNumber}.pdf`,
       fileUrl: signContractDto.documentUrl || `contracts/${contract.id}/contract.pdf`,
@@ -242,7 +239,6 @@ export class ContractService {
   async changeStatus(id: string, status: ContractStatus): Promise<Contract> {
     const contract = await this.findOne(id)
 
-    // Validate status transition
     if (status === ContractStatus.ACTIVE && contract.status !== ContractStatus.PENDING_SIGNATURE) {
       throw new BadRequestException('Contract must be signed before becoming active')
     }
@@ -255,7 +251,6 @@ export class ContractService {
   async remove(id: string): Promise<void> {
     const contract = await this.findOne(id)
 
-    // Check if contract can be deleted
     if (contract.status !== ContractStatus.DRAFT) {
       throw new BadRequestException('Only draft contracts can be deleted')
     }

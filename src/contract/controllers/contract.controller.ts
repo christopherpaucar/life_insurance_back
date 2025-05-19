@@ -23,6 +23,8 @@ import { RequirePermission } from '../../auth/decorators/require-permission.deco
 import { ContractStatus } from '../entities/contract.entity'
 import { AttachmentType } from '../entities/attachment.entity'
 import { FileStorageService } from '../../common/services/file-storage.service'
+import { CurrentUser } from '../../auth/decorators/current-user.decorator'
+import { User } from '../../auth/entities/user.entity'
 
 @Controller('contracts')
 export class ContractController {
@@ -42,8 +44,8 @@ export class ContractController {
   @Get()
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('contract:read')
-  async findAll(@Query() query): Promise<ApiResponseDto> {
-    const { contracts, total, page, limit } = await this.contractService.findAll(query)
+  async findAll(@Query() query, @CurrentUser() user: User): Promise<ApiResponseDto> {
+    const { contracts, total, page, limit } = await this.contractService.findAll(query, user)
     return new ApiResponseDto({
       success: true,
       data: contracts,
@@ -54,9 +56,13 @@ export class ContractController {
   @Get('client/:clientId')
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('contract:read')
-  async findByClient(@Param('clientId') clientId: string, @Query() query): Promise<ApiResponseDto> {
+  async findByClient(
+    @Param('clientId') clientId: string,
+    @Query() query,
+    @CurrentUser() user: User,
+  ): Promise<ApiResponseDto> {
     const queryWithClientId = { ...query, clientId }
-    const { contracts, total, page, limit } = await this.contractService.findAll(queryWithClientId)
+    const { contracts, total, page, limit } = await this.contractService.findAll(queryWithClientId, user)
     return new ApiResponseDto({
       success: true,
       data: contracts,

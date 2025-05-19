@@ -9,7 +9,6 @@ export enum AttachmentType {
   CONTRACT = 'contract',
   REIMBURSEMENT = 'reimbursement',
   INVOICE = 'invoice',
-  OTHER = 'other',
 }
 
 @Entity('attachments')
