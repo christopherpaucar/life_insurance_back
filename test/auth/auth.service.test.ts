@@ -13,6 +13,7 @@ import { User } from '../../src/auth/entities/user.entity'
 import { Role, RoleType } from '../../src/auth/entities/role.entity'
 import { Repository } from 'typeorm'
 import { RoleService } from '../../src/auth/services/role.service'
+import { ClientService } from '../../src/client/services/client.service'
 
 describe('AuthService', () => {
   let authService: AuthService
@@ -20,6 +21,7 @@ describe('AuthService', () => {
   let roleRepository: RoleRepositoryMock
   let roleService: RoleService
   let jwtService: JwtService
+  let clientService: ClientService
 
   beforeEach(() => {
     userRepository = new UserRepositoryMock()
@@ -33,7 +35,10 @@ describe('AuthService', () => {
       roleRepository as unknown as Repository<Role>,
     )
 
-    // Mock roleService.addRoleToUser to just return success
+    clientService = {
+      createClientForUser: vi.fn().mockResolvedValue({}),
+    } as unknown as ClientService
+
     vi.spyOn(roleService, 'addRoleToUser').mockResolvedValue({
       success: true,
       data: {
@@ -43,7 +48,7 @@ describe('AuthService', () => {
       },
     })
 
-    authService = new AuthService(userRepository as unknown as Repository<User>, jwtService, roleService)
+    authService = new AuthService(userRepository as unknown as Repository<User>, jwtService, roleService, clientService)
   })
 
   describe('register', () => {
@@ -73,6 +78,7 @@ describe('AuthService', () => {
         leftJoin: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
         getOne: vi.fn().mockResolvedValue({
           ...mockUser,
           roles: [mockRole],
@@ -137,6 +143,7 @@ describe('AuthService', () => {
         leftJoin: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
         getOne: vi.fn().mockResolvedValue(mockUser),
       }
       vi.spyOn(userRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any)
@@ -166,6 +173,7 @@ describe('AuthService', () => {
         leftJoin: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
         getOne: vi.fn().mockResolvedValue(null),
       }
       vi.spyOn(userRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any)
@@ -190,6 +198,7 @@ describe('AuthService', () => {
         leftJoin: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
         getOne: vi.fn().mockResolvedValue(mockUser),
       }
       vi.spyOn(userRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any)

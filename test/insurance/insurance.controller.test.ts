@@ -32,7 +32,6 @@ describe('InsuranceController', () => {
       createInsuranceDto.description = 'Test Description'
       createInsuranceDto.type = InsuranceType.LIFE
       createInsuranceDto.basePrice = 100
-      createInsuranceDto.isActive = true
       createInsuranceDto.requirements = ['ID', 'Medical Check']
       createInsuranceDto.availablePaymentFrequencies = [PaymentFrequency.MONTHLY]
 
@@ -51,9 +50,9 @@ describe('InsuranceController', () => {
         description: 'Test Description',
         type: InsuranceType.LIFE,
         basePrice: 100,
-        isActive: true,
         requirements: ['ID', 'Medical Check'],
         availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
+        rank: 1,
       }
 
       const mockInsurance = {

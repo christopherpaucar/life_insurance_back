@@ -11,21 +11,31 @@ class InsuranceRepositoryMock {
   public items: Partial<Insurance>[] = []
 
   create(dto: any): Partial<Insurance> {
-    return dto
+    return {
+      ...dto,
+      id: `${this.items.length + 1}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      requirements: dto.requirements || [],
+      rank: dto.rank || 0,
+      availablePaymentFrequencies: dto.availablePaymentFrequencies || [PaymentFrequency.MONTHLY],
+      coverages: [],
+      benefits: [],
+    }
   }
 
-  save(entity: any): Promise<any> {
+  save(entity: any): Promise<Partial<Insurance>> {
     if (entity.id) {
       const index = this.items.findIndex((item) => item.id === entity.id)
       if (index !== -1) {
-        this.items[index] = entity
-        return Promise.resolve(entity)
+        this.items[index] = { ...this.items[index], ...entity }
+        return Promise.resolve(this.items[index])
       }
-    } else {
-      entity.id = `${this.items.length + 1}`
     }
-    this.items.push(entity)
-    return Promise.resolve(entity)
+    const newEntity = this.create(entity)
+    this.items.push(newEntity)
+    return Promise.resolve(newEntity)
   }
 
   findOne(options: any): Promise<Partial<Insurance> | null> {
@@ -49,6 +59,18 @@ class InsuranceRepositoryMock {
       take: () => this,
       getManyAndCount: () => Promise.resolve([this.items, this.items.length]),
     }
+  }
+
+  async softDelete(id: string): Promise<void> {
+    const index = this.items.findIndex((item) => item.id === id)
+    if (index === -1) {
+      throw new NotFoundException(`Insurance with ID ${id} not found`)
+    }
+    this.items[index] = {
+      ...this.items[index],
+      deletedAt: new Date(),
+    }
+    await Promise.resolve()
   }
 }
 
@@ -82,9 +104,9 @@ describe('InsuranceService', () => {
         description: 'Test Description',
         type: InsuranceType.LIFE,
         basePrice: 100,
-        isActive: true,
         requirements: ['ID', 'Medical Check'],
         availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
+        rank: 1,
       }
 
       const insurance = await insuranceService.create(createInsuranceDto)
@@ -107,7 +129,6 @@ describe('InsuranceService', () => {
           description: 'Description 1',
           type: InsuranceType.LIFE,
           basePrice: 100,
-          isActive: true,
         },
         {
           id: '2',
@@ -115,7 +136,6 @@ describe('InsuranceService', () => {
           description: 'Description 2',
           type: InsuranceType.HEALTH,
           basePrice: 200,
-          isActive: true,
         },
       ]
 
@@ -193,25 +213,28 @@ describe('InsuranceService', () => {
   })
 
   describe('remove', () => {
-    it('should soft delete an insurance by setting isActive to false', async () => {
+    it('should soft delete an insurance by setting deletedAt', async () => {
       const mockInsurance = {
         id: '1',
         name: 'Test Insurance',
         description: 'Test Description',
         type: InsuranceType.LIFE,
         basePrice: 100,
-        isActive: true,
+        requirements: [],
+        rank: 0,
+        availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
         coverages: [],
         benefits: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: new Date(),
       }
 
       insuranceRepository.items = [mockInsurance]
 
       await insuranceService.remove('1')
 
-      // The insurance should still exist but be marked as inactive
-      expect(insuranceRepository.items).toHaveLength(1)
-      expect(insuranceRepository.items[0].isActive).toBe(false)
+      expect(insuranceRepository.items[0].deletedAt).toBeDefined()
     })
 
     it('should throw NotFoundException when trying to remove non-existent insurance', async () => {

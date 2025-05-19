@@ -35,6 +35,7 @@ export class UserRepositoryMock {
       leftJoin: () => ({}),
       select: () => ({}),
       where: () => ({}),
+      andWhere: () => ({}),
       getOne: () => Promise.resolve(null),
     }
   }

@@ -6,7 +6,6 @@ export enum AttachmentType {
   IDENTIFICATION = 'identification',
   MEDICAL_RECORD = 'medical_record',
   MEDICAL_EXAM = 'medical_exam',
-  CONTRACT = 'contract',
   REIMBURSEMENT = 'reimbursement',
   INVOICE = 'invoice',
 }
