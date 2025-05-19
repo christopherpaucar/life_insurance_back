@@ -29,13 +29,13 @@ export class Contract extends BaseEntity {
   @Column('date')
   endDate: Date
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
   totalAmount: number
 
   @Column({ type: 'enum', enum: PaymentFrequency })
   paymentFrequency: PaymentFrequency
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
   installmentAmount: number
 
   @Column({ nullable: true })

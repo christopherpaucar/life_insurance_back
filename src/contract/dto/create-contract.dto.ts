@@ -42,7 +42,8 @@ export class CreateContractDto {
   endDate: string
 
   @IsNumber()
-  totalAmount: number
+  @IsOptional()
+  totalAmount?: number
 
   @IsEnum(PaymentFrequency)
   paymentFrequency: PaymentFrequency

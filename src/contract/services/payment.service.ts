@@ -16,7 +16,6 @@ export class PaymentService {
   async generatePaymentSchedule(contract: Contract): Promise<Payment[]> {
     const payments: Payment[] = []
 
-    // Calculate number of payments and frequency
     const startDate = new Date(contract.startDate)
     const endDate = new Date(contract.endDate)
     const frequency = contract.paymentFrequency
@@ -37,10 +36,8 @@ export class PaymentService {
         numberOfPayments = 1
     }
 
-    // Calculate installment amount (round to 2 decimal places)
     const installmentAmount = Math.round((contract.totalAmount / numberOfPayments) * 100) / 100
 
-    // Create payment schedule
     for (let i = 0; i < numberOfPayments; i++) {
       let dueDate = new Date(startDate)
 
@@ -58,11 +55,10 @@ export class PaymentService {
         }
       }
 
-      // Create payment entity
       const payment = this.paymentRepository.create({
         amount:
           i === numberOfPayments - 1
-            ? contract.totalAmount - installmentAmount * (numberOfPayments - 1) // Last payment may be different due to rounding
+            ? contract.totalAmount - installmentAmount * (numberOfPayments - 1)
             : installmentAmount,
         dueDate,
         status: PaymentStatus.PENDING,
@@ -72,9 +68,7 @@ export class PaymentService {
       payments.push(payment)
     }
 
-    // Save all payments
     await this.paymentRepository.save(payments)
-
     return payments
   }
 
@@ -96,7 +90,6 @@ export class PaymentService {
       throw new Error(`Payment with ID ${paymentId} not found`)
     }
 
-    // Update payment with the provided data
     payment.status = paymentData.status
 
     if (paymentData.paymentMethod) {
@@ -111,7 +104,6 @@ export class PaymentService {
       payment.notes = paymentData.notes
     }
 
-    // If payment is marked as paid, add paid date
     if (payment.status === PaymentStatus.PAID) {
       payment.paidAt = new Date()
     }

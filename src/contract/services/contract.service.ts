@@ -11,6 +11,7 @@ import { SignContractDto } from '../dto/sign-contract.dto'
 import { PaymentService } from './payment.service'
 import { SignatureService } from './signature.service'
 import { format } from 'date-fns'
+import { ClientService } from '../../client/services/client.service'
 
 @Injectable()
 export class ContractService {
@@ -21,15 +22,15 @@ export class ContractService {
     private beneficiaryRepository: Repository<Beneficiary>,
     @InjectRepository(Attachment)
     private attachmentRepository: Repository<Attachment>,
+    private clientService: ClientService,
     private paymentService: PaymentService,
     private signatureService: SignatureService,
   ) {}
 
   async create(createContractDto: CreateContractDto): Promise<Contract> {
-    // Generate a contract number
     const contractNumber = `INS-${Date.now().toString().slice(-8)}`
+    const client = await this.clientService.findOneByUserId(createContractDto.clientId)
 
-    // Create the contract
     const contract = this.contractRepository.create({
       contractNumber,
       status: ContractStatus.DRAFT,
@@ -38,27 +39,22 @@ export class ContractService {
       totalAmount: createContractDto.totalAmount,
       paymentFrequency: createContractDto.paymentFrequency,
       notes: createContractDto.notes,
-      client: { id: createContractDto.clientId },
+      client: { id: client.id },
       insurance: { id: createContractDto.insuranceId },
-      installmentAmount: 0, // This will be calculated later
+      installmentAmount: 0,
     })
 
-    // Save the contract to get an ID
     const savedContract = await this.contractRepository.save(contract)
 
-    // Create beneficiaries if included
     if (createContractDto.beneficiaries && createContractDto.beneficiaries.length > 0) {
       const beneficiaries = createContractDto.beneficiaries.map((beneficiary) => {
-        // Split the name into firstName and lastName
         const nameParts = (beneficiary.name || '').split(' ')
         const firstName = nameParts[0] || ''
         const lastName = nameParts.slice(1).join(' ') || ''
 
-        // Map the string relationship to RelationshipType enum
         const relationshipStr = (beneficiary.relationship || '').toLowerCase()
         let relationship = RelationshipType.OTHER
 
-        // Check if the relationship string is a valid enum value
         if (Object.values(RelationshipType).includes(relationshipStr as RelationshipType)) {
           relationship = relationshipStr as RelationshipType
         }
@@ -78,9 +74,7 @@ export class ContractService {
       await this.beneficiaryRepository.save(beneficiaries)
     }
 
-    // Generate payment schedule
     await this.paymentService.generatePaymentSchedule(savedContract)
-
     return this.findOne(savedContract.id)
   }
 

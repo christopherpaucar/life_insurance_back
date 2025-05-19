@@ -57,6 +57,7 @@ export const DEFAULT_PERMISSIONS = {
   ],
   [RoleType.CLIENT]: [
     'contract:read',
+    'contract:create',
     'contract:sign',
     'contract:upload',
     'payment:view',

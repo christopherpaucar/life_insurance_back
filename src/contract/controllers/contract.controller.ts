@@ -106,10 +106,8 @@ export class ContractController {
     @Body('type') type: AttachmentType,
     @Body('description') description?: string,
   ): Promise<ApiResponseDto> {
-    // First get the contract to ensure it exists and to get client info
     const contract = await this.contractService.findOne(id)
 
-    // Upload the file to storage
     const uploadResult = await this.fileStorageService.uploadEntityFile(
       file.buffer ?? Buffer.from(''),
       'contract',
@@ -127,7 +125,6 @@ export class ContractController {
       },
     )
 
-    // Add the attachment to the contract
     const updatedContract = await this.contractService.addAttachment(id, {
       fileName: file.originalname,
       fileUrl: uploadResult.url,

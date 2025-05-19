@@ -187,6 +187,7 @@ export class AuthService {
       .leftJoin('user.roles', 'role')
       .select(['user', 'role.id', 'role.name', 'role.permissions'])
       .where('user.email = :email', { email: dto.email })
+      .andWhere('user.deletedAt IS NULL')
       .getOne()
 
     if (!user) {

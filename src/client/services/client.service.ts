@@ -69,6 +69,21 @@ export class ClientService {
     return client
   }
 
+  async findOneByUserId(userId: string): Promise<Client> {
+    const client = await this.clientRepository
+      .createQueryBuilder('client')
+      .select('client.id')
+      .leftJoin('client.user', 'user')
+      .where('user.id = :userId', { userId })
+      .getOne()
+
+    if (!client) {
+      throw new NotFoundException(`Client with user ID ${userId} not found`)
+    }
+
+    return client
+  }
+
   async update(id: string, updateClientDto: UpdateClientDto): Promise<Client> {
     const client = await this.findOne(id)
     const updated = Object.assign(client, updateClientDto)

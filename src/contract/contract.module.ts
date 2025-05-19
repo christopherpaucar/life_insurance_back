@@ -22,7 +22,7 @@ import { FileStorageModule } from '../common/file-storage.module'
     FileStorageModule,
   ],
   controllers: [ContractController],
-  providers: [ContractService, PaymentService, SignatureService],
+  providers: [ContractService, PaymentService, SignatureService, ContractService],
   exports: [ContractService, PaymentService],
 })
 export class ContractModule {}
