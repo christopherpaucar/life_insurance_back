@@ -1,11 +1,11 @@
 import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
-import { Client } from '../../client/entities/client.entity'
 import { Insurance } from '../../insurance/entities/insurance.entity'
 import { Beneficiary } from './beneficiary.entity'
 import { PaymentFrequency } from '../../insurance/entities/insurance.entity'
 import { Attachment } from './attachment.entity'
 import { Payment } from './payment.entity'
+import { User } from '../../auth/entities/user.entity'
 
 export enum ContractStatus {
   DRAFT = 'draft',
@@ -48,9 +48,9 @@ export class Contract extends BaseEntity {
   @Column({ nullable: true })
   notes: string
 
-  @ManyToOne(() => Client)
-  @JoinColumn({ name: 'client_id' })
-  client: Client
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User
 
   @ManyToOne(() => Insurance)
   @JoinColumn({ name: 'insurance_id' })

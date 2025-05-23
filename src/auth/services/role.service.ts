@@ -137,7 +137,7 @@ export class RoleService {
     // Find user
     const user = await this.userRepository.findOne({
       where: { id: dto.userId },
-      relations: ['roles'],
+      relations: ['role'],
     })
 
     if (!user) {
@@ -154,7 +154,7 @@ export class RoleService {
     const role = await this.getRoleByType(dto.roleType as RoleType)
 
     // Check if user already has this role
-    if (user.roles && user.roles.some((r) => r.id === role.id)) {
+    if (user.role && user.role.id === role.id) {
       throw new BadRequestException({
         success: false,
         error: {
@@ -165,12 +165,12 @@ export class RoleService {
     }
 
     // Initialize roles array if it doesn't exist
-    if (!user.roles) {
-      user.roles = []
+    if (!user.role) {
+      user.role = undefined as any
     }
 
     // Add the role to user
-    user.roles.push(role)
+    user.role = role
 
     // Save user with updated roles
     await this.userRepository.save(user)
@@ -180,7 +180,7 @@ export class RoleService {
       data: {
         message: 'Rol asignado correctamente',
         userId: user.id,
-        roles: user.roles,
+        role: user.role,
       },
     })
   }
@@ -189,7 +189,7 @@ export class RoleService {
     // Find user
     const user = await this.userRepository.findOne({
       where: { id: dto.userId },
-      relations: ['roles'],
+      relations: ['role'],
     })
 
     if (!user) {
@@ -203,7 +203,7 @@ export class RoleService {
     }
 
     // Check if user has roles
-    if (!user.roles || user.roles.length === 0) {
+    if (!user.role) {
       throw new BadRequestException({
         success: false,
         error: {
@@ -217,9 +217,7 @@ export class RoleService {
     const roleToRemove = await this.getRoleByType(dto.roleType as RoleType)
 
     // Find role index
-    const roleIndex = user.roles.findIndex((r) => r.id === roleToRemove.id)
-
-    if (roleIndex === -1) {
+    if (user.role.id !== roleToRemove.id) {
       throw new BadRequestException({
         success: false,
         error: {
@@ -230,7 +228,7 @@ export class RoleService {
     }
 
     // Remove role
-    user.roles.splice(roleIndex, 1)
+    user.role = undefined as any
 
     // Save user with updated roles
     await this.userRepository.save(user)
@@ -240,7 +238,7 @@ export class RoleService {
       data: {
         message: 'Rol eliminado correctamente',
         userId: user.id,
-        roles: user.roles,
+        role: user.role,
       },
     })
   }
@@ -248,7 +246,7 @@ export class RoleService {
   async getUserRoles(userId: string) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['roles'],
+      relations: ['role'],
     })
 
     if (!user) {
@@ -265,7 +263,7 @@ export class RoleService {
       success: true,
       data: {
         userId: user.id,
-        roles: user.roles || [],
+        role: user.role,
       },
     })
   }

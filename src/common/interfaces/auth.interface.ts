@@ -1,4 +1,5 @@
 import { Role, RoleType } from '../../auth/entities/role.entity'
+import { User } from '../../auth/entities/user.entity'
 
 export interface IUser {
   id: string
@@ -7,21 +8,12 @@ export interface IUser {
   password: string
   createdAt: Date
   updatedAt: Date
-  roles?: Role[]
+  role?: Role
 }
 
 export interface IAuthResponse {
-  success: boolean
-  data?: {
-    user: Omit<IUser, 'password' | 'createdAt' | 'updatedAt'> & {
-      roles?: Role[]
-    }
-    token: string
-  }
-  error?: {
-    message: string
-    code: string
-  }
+  user: Partial<User> & { password?: string }
+  token: string
 }
 
 export interface ILoginDto {
@@ -29,18 +21,16 @@ export interface ILoginDto {
   password: string
 }
 
-export interface IRegisterDto {
+export interface IRegisterDto extends ILoginDto {
   name: string
-  email: string
-  password: string
-  role: RoleType
+  role: string
 }
 
 export interface IJwtPayload {
   sub: string
   email: string
   name: string
-  roles?: Role[]
+  role?: Role
 }
 
 export interface IAddRoleDto {

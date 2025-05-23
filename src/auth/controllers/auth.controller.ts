@@ -1,10 +1,13 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common'
 import { AuthService } from '../services/auth.service'
-import { ICreateUserDto } from '../../common/interfaces/auth.interface'
 import { LoginDto, RegisterDto } from '../dto/auth.dto'
 import { JwtAuthGuard } from '../guards/jwt-auth.guard'
-import { PermissionGuard } from '../guards/permission.guard'
-import { RequirePermission } from '../decorators/require-permission.decorator'
+import { RolesGuard } from '../guards/roles.guard'
+import { Roles } from '../decorators/roles.decorator'
+import { RoleType } from '../entities/role.entity'
+import { ApiResponseDto } from '../../common/dto/api-response.dto'
+import { CurrentUser } from '../decorators/current-user.decorator'
+import { User } from '../entities/user.entity'
 
 @Controller('auth')
 export class AuthController {
@@ -12,18 +15,24 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto)
+    const user = await this.authService.register(dto)
+
+    return new ApiResponseDto({ success: true, data: user })
+  }
+
+  @Post('register/admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleType.ADMIN, RoleType.SUPER_ADMIN)
+  async registerAdmin(@Body() dto: RegisterDto, @CurrentUser() user: User) {
+    const newUser = await this.authService.register(dto, user)
+
+    return new ApiResponseDto({ success: true, data: newUser })
   }
 
   @Post('login')
   async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto)
-  }
+    const user = await this.authService.login(dto)
 
-  @Post('create-user')
-  @UseGuards(JwtAuthGuard, PermissionGuard)
-  @RequirePermission('user:create')
-  async createUser(@Body() dto: ICreateUserDto) {
-    return this.authService.createUserWithRole(dto)
+    return new ApiResponseDto({ success: true, data: user })
   }
 }

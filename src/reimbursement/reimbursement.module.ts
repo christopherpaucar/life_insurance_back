@@ -5,11 +5,10 @@ import { ReimbursementService } from './services/reimbursement.service'
 import { Reimbursement } from './entities/reimbursement.entity'
 import { ReimbursementItem } from './entities/reimbursement-item.entity'
 import { AuthModule } from '../auth/auth.module'
-import { ClientModule } from '../client/client.module'
 import { ContractModule } from '../contract/contract.module'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Reimbursement, ReimbursementItem]), AuthModule, ClientModule, ContractModule],
+  imports: [TypeOrmModule.forFeature([Reimbursement, ReimbursementItem]), AuthModule, ContractModule],
   controllers: [ReimbursementController],
   providers: [ReimbursementService],
   exports: [ReimbursementService],

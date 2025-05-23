@@ -1,8 +1,8 @@
 import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
-import { Client } from '../../client/entities/client.entity'
 import { Contract } from '../../contract/entities/contract.entity'
 import { ReimbursementItem } from './reimbursement-item.entity'
+import { User } from '../../auth/entities/user.entity'
 
 export enum ReimbursementStatus {
   SUBMITTED = 'submitted',
@@ -39,9 +39,9 @@ export class Reimbursement extends BaseEntity {
   @Column({ nullable: true })
   reviewerId: string
 
-  @ManyToOne(() => Client)
-  @JoinColumn({ name: 'client_id' })
-  client: Client
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User
 
   @ManyToOne(() => Contract)
   @JoinColumn({ name: 'contract_id' })

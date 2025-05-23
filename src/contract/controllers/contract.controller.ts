@@ -36,8 +36,8 @@ export class ContractController {
   @Post()
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('contract:create')
-  async create(@Body() createContractDto: CreateContractDto): Promise<ApiResponseDto> {
-    const contract = await this.contractService.create(createContractDto)
+  async create(@Body() createContractDto: CreateContractDto, @CurrentUser() user: User): Promise<ApiResponseDto> {
+    const contract = await this.contractService.create(createContractDto, user)
     return new ApiResponseDto({ success: true, data: contract })
   }
 
@@ -46,23 +46,7 @@ export class ContractController {
   @RequirePermission('contract:read')
   async findAll(@Query() query, @CurrentUser() user: User): Promise<ApiResponseDto> {
     const { contracts, total, page, limit } = await this.contractService.findAll(query, user)
-    return new ApiResponseDto({
-      success: true,
-      data: contracts,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
-    })
-  }
 
-  @Get('client/:clientId')
-  @UseGuards(JwtAuthGuard, PermissionGuard)
-  @RequirePermission('contract:read')
-  async findByClient(
-    @Param('clientId') clientId: string,
-    @Query() query,
-    @CurrentUser() user: User,
-  ): Promise<ApiResponseDto> {
-    const queryWithClientId = { ...query, clientId }
-    const { contracts, total, page, limit } = await this.contractService.findAll(queryWithClientId, user)
     return new ApiResponseDto({
       success: true,
       data: contracts,
@@ -126,8 +110,8 @@ export class ContractController {
         entityId: id,
         entityType: 'contract',
         documentType: type,
-        ownerId: contract.client.id,
-        ownerType: 'client',
+        ownerId: contract.user.id,
+        ownerType: 'user',
       },
     )
 

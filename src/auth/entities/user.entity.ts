@@ -1,4 +1,4 @@
-import { Entity, Column, Index, ManyToMany, JoinTable } from 'typeorm'
+import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm'
 import { IUser } from '../../common/interfaces/auth.interface'
 import { BaseEntity } from '../../common/entities/base.entity'
 import { Role } from './role.entity'
@@ -22,11 +22,10 @@ export class User extends BaseEntity implements IUser {
   @Column({ nullable: true })
   lastLogin: Date
 
-  @ManyToMany(() => Role, (role) => role.users)
-  @JoinTable({
-    name: 'users_roles',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
-  })
-  roles: Role[]
+  @ManyToOne(() => Role, (role) => role.users)
+  @JoinColumn({ name: 'role_id' })
+  role: Role
+
+  @Column({ default: false })
+  onboardingCompleted: boolean
 }

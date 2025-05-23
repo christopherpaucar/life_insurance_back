@@ -5,7 +5,6 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './auth/auth.module'
 import { InsuranceModule } from './insurance/insurance.module'
-import { ClientModule } from './client/client.module'
 import { ContractModule } from './contract/contract.module'
 import { ReimbursementModule } from './reimbursement/reimbursement.module'
 import { FileStorageModule } from './common/file-storage.module'
@@ -33,7 +32,6 @@ import { FileStorageModule } from './common/file-storage.module'
     }),
     AuthModule,
     InsuranceModule,
-    ClientModule,
     ContractModule,
     ReimbursementModule,
     FileStorageModule,

@@ -40,11 +40,15 @@ describe('AuthController', () => {
       data: {
         message: 'Role assigned successfully',
         userId: '1',
-        roles: [RoleFactory.create()],
+        role: RoleFactory.create(),
       },
     })
 
-    authService = new AuthService(userRepository as unknown as Repository<User>, jwtService, roleService)
+    authService = new AuthService(
+      userRepository as unknown as Repository<User>,
+      roleRepository as unknown as Repository<Role>,
+      jwtService,
+    )
     authController = new AuthController(authService)
   })
 
@@ -72,34 +76,28 @@ describe('AuthController', () => {
       const mockUser = UserFactory.create({
         email: registerDto.email,
         name: registerDto.name,
-        roles: [mockRole],
+        role: mockRole,
       })
 
       const expectedResponse: IAuthResponse = {
-        success: true,
-        data: {
-          user: {
-            id: mockUser.id,
-            email: mockUser.email,
-            name: mockUser.name,
-            roles: [mockRole],
-          },
-          token: 'mock-token',
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockRole,
         },
+        token: 'mock-token',
       }
 
       vi.spyOn(authService, 'register').mockResolvedValue(expectedResponse)
       const result = await authController.register(registerDto)
 
-      expect(result).toHaveProperty('success')
-      expect(result).toHaveProperty('data')
-      const response = result
-      expect(response.data).toHaveProperty('user')
-      expect(response.data).toHaveProperty('token')
-      expect(response.data!.user).toHaveProperty('id')
-      expect(response.data!.user).toHaveProperty('email')
-      expect(response.data!.user).toHaveProperty('name')
-      expect(response.data!.user).toHaveProperty('roles')
+      expect(result.data).toHaveProperty('user')
+      expect(result.data).toHaveProperty('token')
+      expect(result.data?.user).toHaveProperty('id')
+      expect(result.data?.user).toHaveProperty('email')
+      expect(result.data?.user).toHaveProperty('name')
+      expect(result.data?.user).toHaveProperty('role')
     })
   })
 
@@ -123,34 +121,28 @@ describe('AuthController', () => {
       const mockUser = UserFactory.create({
         email: loginDto.email,
         name: 'Test User',
-        roles: [mockRole],
+        role: mockRole,
       })
 
       const expectedResponse: IAuthResponse = {
-        success: true,
-        data: {
-          user: {
-            id: mockUser.id,
-            email: mockUser.email,
-            name: mockUser.name,
-            roles: [mockRole],
-          },
-          token: 'mock-token',
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockRole,
         },
+        token: 'mock-token',
       }
 
       vi.spyOn(authService, 'login').mockResolvedValue(expectedResponse)
       const result = await authController.login(loginDto)
 
-      expect(result).toHaveProperty('success')
-      expect(result).toHaveProperty('data')
-      const response = result
-      expect(response.data).toHaveProperty('user')
-      expect(response.data).toHaveProperty('token')
-      expect(response.data!.user).toHaveProperty('id')
-      expect(response.data!.user).toHaveProperty('email')
-      expect(response.data!.user).toHaveProperty('name')
-      expect(response.data!.user).toHaveProperty('roles')
+      expect(result.data).toHaveProperty('user')
+      expect(result.data).toHaveProperty('token')
+      expect(result.data?.user).toHaveProperty('id')
+      expect(result.data?.user).toHaveProperty('email')
+      expect(result.data?.user).toHaveProperty('name')
+      expect(result.data?.user).toHaveProperty('role')
     })
   })
 })

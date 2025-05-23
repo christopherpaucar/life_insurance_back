@@ -11,7 +11,6 @@ import { SignContractDto } from '../dto/sign-contract.dto'
 import { PaymentService } from './payment.service'
 import { SignatureService } from './signature.service'
 import { format } from 'date-fns'
-import { ClientService } from '../../client/services/client.service'
 import { User } from '../../auth/entities/user.entity'
 import { RoleType } from '../../auth/entities/role.entity'
 
@@ -24,14 +23,12 @@ export class ContractService {
     private beneficiaryRepository: Repository<Beneficiary>,
     @InjectRepository(Attachment)
     private attachmentRepository: Repository<Attachment>,
-    private clientService: ClientService,
     private paymentService: PaymentService,
     private signatureService: SignatureService,
   ) {}
 
-  async create(createContractDto: CreateContractDto): Promise<Contract> {
+  async create(createContractDto: CreateContractDto, currentUser: User): Promise<Contract> {
     const contractNumber = `INS-${Date.now().toString().slice(-8)}`
-    const client = await this.clientService.findOneByUserId(createContractDto.clientId)
 
     const contract = this.contractRepository.create({
       contractNumber,
@@ -41,7 +38,7 @@ export class ContractService {
       totalAmount: createContractDto.totalAmount,
       paymentFrequency: createContractDto.paymentFrequency,
       notes: createContractDto.notes,
-      client: { id: client.id },
+      user: { id: currentUser.id },
       insurance: { id: createContractDto.insuranceId },
       installmentAmount: 0,
     })
@@ -80,8 +77,11 @@ export class ContractService {
     return this.findOne(savedContract.id)
   }
 
-  async findAll(query, user: User): Promise<{ contracts: Contract[]; total: number; page: number; limit: number }> {
-    if (user.roles[0].name === RoleType.CLIENT) {
+  async findAll(
+    query: any,
+    user: User,
+  ): Promise<{ contracts: Contract[]; total: number; page: number; limit: number }> {
+    if (user.role.name === RoleType.CLIENT) {
       query.userId = user.id
     }
 
@@ -91,7 +91,7 @@ export class ContractService {
 
     const queryBuilder = this.contractRepository
       .createQueryBuilder('contract')
-      .leftJoinAndSelect('contract.client', 'client')
+      .leftJoinAndSelect('contract.user', 'user')
       .leftJoinAndSelect('contract.insurance', 'insurance')
       .leftJoinAndSelect('contract.beneficiaries', 'beneficiaries')
       .leftJoinAndSelect('contract.payments', 'payments')
@@ -104,16 +104,12 @@ export class ContractService {
       queryBuilder.andWhere('contract.status = :status', { status: query.status.toLowerCase() })
     }
 
-    if (query.clientId) {
-      queryBuilder.andWhere('contract.client_id = :clientId', { clientId: query.clientId })
+    if (query.userId) {
+      queryBuilder.andWhere('contract.user_id = :userId', { userId: query.userId })
     }
 
     if (query.hasDuePayments === 'true') {
       queryBuilder.andWhere('payments.status = :paymentStatus', { paymentStatus: PaymentStatus.OVERDUE })
-    }
-
-    if (query.userId) {
-      queryBuilder.andWhere('client.userId = :userId', { userId: query.userId })
     }
 
     const [contracts, total] = await queryBuilder.getManyAndCount()
@@ -124,7 +120,7 @@ export class ContractService {
   async findOne(id: string): Promise<Contract> {
     const contract = await this.contractRepository.findOne({
       where: { id },
-      relations: ['client', 'insurance', 'beneficiaries', 'payments', 'attachments'],
+      relations: ['user', 'insurance', 'beneficiaries', 'payments', 'attachments'],
     })
 
     if (!contract) {

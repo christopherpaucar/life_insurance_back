@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm'
+import { Entity, Column, OneToMany } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
 import { User } from './user.entity'
 
@@ -137,11 +137,6 @@ export class Role extends BaseEntity {
   @Column({ type: 'json', nullable: true })
   permissions: string[]
 
-  @ManyToMany(() => User, (user) => user.roles)
-  @JoinTable({
-    name: 'user_roles',
-    joinColumn: { name: 'role_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
-  })
-  users: User[]
+  @OneToMany(() => User, (user) => user.role)
+  users: User
 }
