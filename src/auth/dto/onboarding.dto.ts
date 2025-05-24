@@ -1,13 +1,24 @@
-import { IsDate, IsString, IsNumber, IsOptional, IsObject, Min, Max } from 'class-validator'
+import { IsDate, IsString, IsNumber, IsOptional, IsObject, Min, Max, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
+
+export enum BloodType {
+  A_POSITIVE = 'A+',
+  A_NEGATIVE = 'A-',
+  B_POSITIVE = 'B+',
+  B_NEGATIVE = 'B-',
+  AB_POSITIVE = 'AB+',
+  AB_NEGATIVE = 'AB-',
+  O_POSITIVE = 'O+',
+  O_NEGATIVE = 'O-',
+}
 
 export class OnboardingDto {
   @IsDate()
   @Type(() => Date)
   birthDate: Date
 
-  @IsString()
-  bloodType: string
+  @IsEnum(BloodType)
+  bloodType: BloodType
 
   @IsString()
   gender: string

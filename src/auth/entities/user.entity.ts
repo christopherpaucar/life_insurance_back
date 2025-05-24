@@ -2,6 +2,7 @@ import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm'
 import { IUser } from '../../common/interfaces/auth.interface'
 import { BaseEntity } from '../../common/entities/base.entity'
 import { Role } from './role.entity'
+import { BloodType } from '../dto/onboarding.dto'
 
 @Entity('users')
 export class User extends BaseEntity implements IUser {
@@ -26,8 +27,8 @@ export class User extends BaseEntity implements IUser {
   @Column({ type: 'date', nullable: true })
   birthDate: Date
 
-  @Column({ nullable: true })
-  bloodType: string
+  @Column({ nullable: true, type: 'enum', enum: BloodType })
+  bloodType: BloodType
 
   @Column({ nullable: true })
   gender: string

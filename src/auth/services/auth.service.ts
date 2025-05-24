@@ -62,11 +62,7 @@ export class AuthService {
     const { password: _, ...userWithoutPassword } = savedUser
     return {
       user: userWithoutPassword,
-      token: this.jwtService.sign({
-        sub: savedUser.id,
-        email: savedUser.email,
-        role: savedUser.role.name,
-      }),
+      token: this.generateToken(savedUser),
     }
   }
 
@@ -86,7 +82,7 @@ export class AuthService {
     const { password: _, ...userWithoutPassword } = user
     return {
       user: userWithoutPassword,
-      token: this.jwtService.sign({ sub: user.id, email: user.email, role: user.role.name }),
+      token: this.generateToken(user),
     }
   }
 
