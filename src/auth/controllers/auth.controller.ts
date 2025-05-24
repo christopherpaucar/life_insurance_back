@@ -1,6 +1,7 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common'
 import { AuthService } from '../services/auth.service'
 import { LoginDto, RegisterDto } from '../dto/auth.dto'
+import { OnboardingDto } from '../dto/onboarding.dto'
 import { JwtAuthGuard } from '../guards/jwt-auth.guard'
 import { RolesGuard } from '../guards/roles.guard'
 import { Roles } from '../decorators/roles.decorator'
@@ -34,5 +35,14 @@ export class AuthController {
     const user = await this.authService.login(dto)
 
     return new ApiResponseDto({ success: true, data: user })
+  }
+
+  @Post('onboarding')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleType.CLIENT)
+  async onboarding(@Body() dto: OnboardingDto, @CurrentUser() user: User) {
+    const updatedUser = await this.authService.onboarding(user, dto)
+
+    return new ApiResponseDto({ success: true, data: updatedUser })
   }
 }

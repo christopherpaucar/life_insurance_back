@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common'
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Observable } from 'rxjs'
 import { User } from '../entities/user.entity'
@@ -8,8 +8,9 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const roles = this.reflector.get<string[]>('roles', context.getHandler())
-    if (!roles) {
+    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler())
+
+    if (!requiredRoles) {
       return true
     }
 
@@ -17,9 +18,15 @@ export class RolesGuard implements CanActivate {
     const user = request.user as User
 
     if (!user || !user.role) {
-      return false
+      throw new UnauthorizedException('User not authenticated or missing role')
     }
 
-    return roles.includes(user.role.name)
+    const hasRole = requiredRoles.some((role) => role.toLowerCase() === user.role.name.toLowerCase())
+
+    if (!hasRole) {
+      throw new UnauthorizedException('User does not have required role')
+    }
+
+    return true
   }
 }

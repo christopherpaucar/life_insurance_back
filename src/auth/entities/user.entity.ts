@@ -16,16 +16,43 @@ export class User extends BaseEntity implements IUser {
   @Column()
   password: string
 
-  @Column({ default: false })
-  isActive: boolean
-
-  @Column({ nullable: true })
-  lastLogin: Date
-
   @ManyToOne(() => Role, (role) => role.users)
   @JoinColumn({ name: 'role_id' })
   role: Role
 
   @Column({ default: false })
   onboardingCompleted: boolean
+
+  @Column({ type: 'date', nullable: true })
+  birthDate: Date
+
+  @Column({ nullable: true })
+  bloodType: string
+
+  @Column({ nullable: true })
+  gender: string
+
+  @Column({ nullable: true })
+  height: number
+
+  @Column({ nullable: true })
+  weight: number
+
+  @Column({ nullable: true })
+  address: string
+
+  @Column({ nullable: true })
+  phoneNumber: string
+
+  @Column({ nullable: true })
+  emergencyContact: string
+
+  @Column({ nullable: true })
+  emergencyPhone: string
+
+  @Column({ type: 'jsonb', nullable: true })
+  medicalHistory: Record<string, any>
+
+  @Column({ type: 'jsonb', nullable: true })
+  lifestyle: Record<string, any>
 }

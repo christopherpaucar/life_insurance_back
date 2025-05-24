@@ -39,8 +39,7 @@ export class UserService {
   }
 
   async remove(id: string): Promise<void> {
-    const user = await this.findOne(id)
-    await this.userRepository.remove(user)
+    await this.userRepository.softDelete(id)
   }
 
   async updateRole(id: string, roleType: RoleType): Promise<User> {

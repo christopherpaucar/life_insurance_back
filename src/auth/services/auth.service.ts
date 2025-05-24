@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common'
+import { Injectable, ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
@@ -9,6 +9,7 @@ import { IAuthResponse } from '../../common/interfaces/auth.interface'
 import { RoleType } from '../entities/role.entity'
 import { Role } from '../entities/role.entity'
 import { LoginDto, RegisterDto } from '../dto/auth.dto'
+import { OnboardingDto } from '../dto/onboarding.dto'
 
 @Injectable()
 export class AuthService {
@@ -96,5 +97,23 @@ export class AuthService {
       name: user.name,
       onboardingCompleted: user.onboardingCompleted,
     })
+  }
+
+  async onboarding(user: User, dto: OnboardingDto): Promise<User> {
+    if (user.role.name !== RoleType.CLIENT) {
+      throw new ForbiddenException('Only clients can complete onboarding')
+    }
+
+    if (user.onboardingCompleted) {
+      throw new ForbiddenException('Onboarding already completed')
+    }
+
+    const updatedUser = await this.userRepository.save({
+      ...user,
+      ...dto,
+      onboardingCompleted: true,
+    })
+
+    return updatedUser
   }
 }
