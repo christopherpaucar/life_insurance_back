@@ -62,7 +62,6 @@ export class RoleService {
   }
 
   async getRolePermissions(roleType: string) {
-    // Validate if the role exists
     if (!Object.values(RoleType).includes(roleType as RoleType)) {
       throw new NotFoundException({
         success: false,
@@ -85,7 +84,6 @@ export class RoleService {
   }
 
   async updateRolePermissions(roleType: string, permissions: string[]) {
-    // Validate if the role exists
     if (!Object.values(RoleType).includes(roleType as RoleType)) {
       throw new NotFoundException({
         success: false,
@@ -268,21 +266,17 @@ export class RoleService {
     })
   }
 
-  // Utility method to check if user has permission
-  hasPermission(userRoles: Role[], requiredPermission: PermissionType): boolean {
-    // Check if any of the user's roles has the required permission
-    return userRoles.some((role) => {
-      // Check for "all" permissions first
-      if (role.permissions && (role.permissions.includes('all:manage') || role.permissions.includes('all:read'))) {
-        // All-access for specific action types
+  hasPermission(userRole: Role, requiredPermission: PermissionType): boolean {
+    return userRole.permissions.some((permission) => {
+      if (permission && (permission.includes('all:manage') || permission.includes('all:read'))) {
         const actionType = requiredPermission.split(':')[1]
-        if (role.permissions.includes(`all:${actionType}`)) {
+
+        if (userRole.permissions.includes(`all:${actionType}`)) {
           return true
         }
       }
 
-      // Direct permission check
-      return role.permissions && role.permissions.includes(requiredPermission)
+      return userRole.permissions && userRole.permissions.includes(requiredPermission)
     })
   }
 }

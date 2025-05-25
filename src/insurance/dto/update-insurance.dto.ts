@@ -23,11 +23,25 @@ export class UpdateInsuranceDto {
   isActive?: boolean
 
   @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   requirements?: string[]
 
-  @IsArray()
+  @IsNumber()
+  @IsOptional()
+  order?: number
+
   @IsEnum(PaymentFrequency, { each: true })
   @IsOptional()
   availablePaymentFrequencies?: PaymentFrequency[]
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  coverageIds?: string[]
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  benefitIds?: string[]
 }

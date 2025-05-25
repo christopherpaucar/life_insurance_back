@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany } from 'typeorm'
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
 import { InsuranceCoverage } from './insurance-coverage.entity'
 import { InsuranceBenefit } from './insurance-benefit.entity'
@@ -45,9 +45,19 @@ export class Insurance extends BaseEntity {
   })
   availablePaymentFrequencies: PaymentFrequency[]
 
-  @OneToMany(() => InsuranceCoverage, (coverage) => coverage.insurance)
+  @ManyToMany(() => InsuranceCoverage, (coverage) => coverage.insurances)
+  @JoinTable({
+    name: 'insurance_coverage_relations',
+    joinColumn: { name: 'insurance_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'coverage_id', referencedColumnName: 'id' },
+  })
   coverages: InsuranceCoverage[]
 
-  @OneToMany(() => InsuranceBenefit, (benefit) => benefit.insurance)
+  @ManyToMany(() => InsuranceBenefit, (benefit) => benefit.insurances)
+  @JoinTable({
+    name: 'insurance_benefit_relations',
+    joinColumn: { name: 'insurance_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'benefit_id', referencedColumnName: 'id' },
+  })
   benefits: InsuranceBenefit[]
 }

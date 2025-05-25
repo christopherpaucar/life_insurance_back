@@ -7,34 +7,31 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
 import { PermissionGuard } from '../../auth/guards/permission.guard'
 import { RequirePermission } from '../../auth/decorators/require-permission.decorator'
 
-@Controller('insurances/:insuranceId/coverages')
+@Controller('coverages')
 export class InsuranceCoverageController {
   constructor(private readonly coverageService: InsuranceCoverageService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('insurance:create')
-  async create(
-    @Param('insuranceId') insuranceId: string,
-    @Body() createCoverageDto: CreateInsuranceCoverageDto,
-  ): Promise<ApiResponseDto> {
-    const coverage = await this.coverageService.create(insuranceId, createCoverageDto)
+  async create(@Body() createCoverageDto: CreateInsuranceCoverageDto): Promise<ApiResponseDto> {
+    const coverage = await this.coverageService.create(createCoverageDto)
     return new ApiResponseDto({ success: true, data: coverage })
   }
 
   @Get()
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('insurance:read')
-  async findAll(@Param('insuranceId') insuranceId: string): Promise<ApiResponseDto> {
-    const coverages = await this.coverageService.findAll(insuranceId)
+  async findAll(): Promise<ApiResponseDto> {
+    const coverages = await this.coverageService.findAll()
     return new ApiResponseDto({ success: true, data: coverages })
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('insurance:read')
-  async findOne(@Param('insuranceId') insuranceId: string, @Param('id') id: string): Promise<ApiResponseDto> {
-    const coverage = await this.coverageService.findOne(insuranceId, id)
+  async findOne(@Param('id') id: string): Promise<ApiResponseDto> {
+    const coverage = await this.coverageService.findOne(id)
     return new ApiResponseDto({ success: true, data: coverage })
   }
 
@@ -42,19 +39,17 @@ export class InsuranceCoverageController {
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('insurance:update')
   async update(
-    @Param('insuranceId') insuranceId: string,
     @Param('id') id: string,
     @Body() updateCoverageDto: UpdateInsuranceCoverageDto,
   ): Promise<ApiResponseDto> {
-    const coverage = await this.coverageService.update(insuranceId, id, updateCoverageDto)
+    const coverage = await this.coverageService.update(id, updateCoverageDto)
     return new ApiResponseDto({ success: true, data: coverage })
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, PermissionGuard)
-  @RequirePermission('insurance:delete')
-  async remove(@Param('insuranceId') insuranceId: string, @Param('id') id: string): Promise<ApiResponseDto> {
-    await this.coverageService.remove(insuranceId, id)
+  async remove(@Param('id') id: string): Promise<ApiResponseDto> {
+    await this.coverageService.remove(id)
     return new ApiResponseDto({ success: true })
   }
 }

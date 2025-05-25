@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm'
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
 import { Insurance } from './insurance.entity'
 
@@ -16,7 +16,11 @@ export class InsuranceCoverage extends BaseEntity {
   @Column('decimal', { precision: 10, scale: 2 })
   additionalCost: number
 
-  @ManyToOne(() => Insurance, (insurance) => insurance.coverages, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'insurance_id' })
-  insurance: Insurance
+  @ManyToMany(() => Insurance, (insurance) => insurance.coverages)
+  @JoinTable({
+    name: 'insurance_coverage_relations',
+    joinColumn: { name: 'coverage_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'insurance_id', referencedColumnName: 'id' },
+  })
+  insurances: Insurance[]
 }

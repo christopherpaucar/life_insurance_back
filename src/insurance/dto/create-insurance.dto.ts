@@ -17,15 +17,25 @@ export class CreateInsuranceDto {
   basePrice: number
 
   @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  requirements: string[]
-
-  @IsArray()
-  @IsEnum(PaymentFrequency, { each: true })
-  @IsOptional()
-  availablePaymentFrequencies: PaymentFrequency[]
+  requirements?: string[]
 
   @IsNumber()
   @IsOptional()
-  rank: number
+  order?: number
+
+  @IsEnum(PaymentFrequency, { each: true })
+  @IsOptional()
+  availablePaymentFrequencies?: PaymentFrequency[]
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  coverageIds?: string[]
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  benefitIds?: string[]
 }
