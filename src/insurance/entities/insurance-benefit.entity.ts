@@ -1,6 +1,12 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm'
+import { Entity, Column, OneToMany } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
-import { Insurance } from './insurance.entity'
+import { InsuranceBenefitRelation } from './insurance-benefit-relation.entity'
+
+export interface InsuranceBenefitDTO {
+  id: string
+  name: string
+  description: string
+}
 
 @Entity('insurance_benefits')
 export class InsuranceBenefit extends BaseEntity {
@@ -10,14 +16,14 @@ export class InsuranceBenefit extends BaseEntity {
   @Column('text')
   description: string
 
-  @Column('decimal', { precision: 10, scale: 2 })
-  additionalCost: number
+  @OneToMany(() => InsuranceBenefitRelation, (relation) => relation.benefit)
+  insurance: InsuranceBenefitRelation[]
 
-  @ManyToMany(() => Insurance, (insurance) => insurance.benefits)
-  @JoinTable({
-    name: 'insurance_benefit_relations',
-    joinColumn: { name: 'benefit_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'insurance_id', referencedColumnName: 'id' },
-  })
-  insurances: Insurance[]
+  static toDTO(insuranceBenefit: InsuranceBenefit): InsuranceBenefitDTO {
+    return {
+      id: insuranceBenefit.id,
+      name: insuranceBenefit.name,
+      description: insuranceBenefit.description,
+    }
+  }
 }

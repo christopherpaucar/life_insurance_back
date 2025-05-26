@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, In, Not, IsNull } from 'typeorm'
+import { Repository, In } from 'typeorm'
 import { Insurance } from '../entities/insurance.entity'
 import { CreateInsuranceDto } from '../dto/create-insurance.dto'
 import { UpdateInsuranceDto } from '../dto/update-insurance.dto'
@@ -9,6 +9,8 @@ import { PaginationDto } from '../../common/dto/pagination.dto'
 import { PaginatedResponse } from '../../common/interfaces/pagination.interface'
 import { InsuranceCoverage } from '../entities/insurance-coverage.entity'
 import { InsuranceBenefit } from '../entities/insurance-benefit.entity'
+import { InsuranceBenefitRelation } from '../entities/insurance-benefit-relation.entity'
+import { InsuranceCoverageRelation } from '../entities/insurance-coverage-relation.entity'
 
 @Injectable()
 export class InsuranceService {
@@ -19,30 +21,55 @@ export class InsuranceService {
     private coverageRepository: Repository<InsuranceCoverage>,
     @InjectRepository(InsuranceBenefit)
     private benefitRepository: Repository<InsuranceBenefit>,
+    @InjectRepository(InsuranceCoverageRelation)
+    private coverageRelationRepository: Repository<InsuranceCoverageRelation>,
+    @InjectRepository(InsuranceBenefitRelation)
+    private benefitRelationRepository: Repository<InsuranceBenefitRelation>,
   ) {}
 
   async create(createInsuranceDto: CreateInsuranceDto): Promise<Insurance> {
-    const { coverageIds, benefitIds, ...insuranceData } = createInsuranceDto
-
+    const { coverages: coveragesDto, benefits: benefitsDto, ...insuranceData } = createInsuranceDto
     const insurance = this.insuranceRepository.create(insuranceData)
+    const savedInsurance = await this.insuranceRepository.save(insurance)
 
-    if (coverageIds?.length) {
-      const coverages = await this.coverageRepository.findBy({ id: In(coverageIds) })
-      if (coverages.length !== coverageIds.length) {
+    if (coveragesDto?.length) {
+      const coverages = await this.coverageRepository.findBy({ id: In(coveragesDto.map((coverage) => coverage.id)) })
+      if (coverages.length !== coveragesDto.length) {
         throw new NotFoundException('One or more coverages not found')
       }
-      insurance.coverages = coverages
+
+      const coverageRelations = coveragesDto.map((coverageDto) => {
+        const coverage = coverages.find((c) => c.id === coverageDto.id)
+        return this.coverageRelationRepository.create({
+          insurance: savedInsurance,
+          coverage,
+          coverageAmount: coverageDto.coverageAmount ?? 0,
+          additionalCost: coverageDto.additionalCost ?? 0,
+        })
+      })
+
+      await this.coverageRelationRepository.save(coverageRelations)
     }
 
-    if (benefitIds?.length) {
-      const benefits = await this.benefitRepository.findBy({ id: In(benefitIds) })
-      if (benefits.length !== benefitIds.length) {
+    if (benefitsDto?.length) {
+      const benefits = await this.benefitRepository.findBy({ id: In(benefitsDto.map((benefit) => benefit.id)) })
+      if (benefits.length !== benefitsDto.length) {
         throw new NotFoundException('One or more benefits not found')
       }
-      insurance.benefits = benefits
+
+      const benefitRelations = benefitsDto.map((benefitDto) => {
+        const benefit = benefits.find((b) => b.id === benefitDto.id)
+        return this.benefitRelationRepository.create({
+          insurance: savedInsurance,
+          benefit,
+          additionalCost: benefitDto.additionalCost ?? 0,
+        })
+      })
+
+      await this.benefitRelationRepository.save(benefitRelations)
     }
 
-    return await this.insuranceRepository.save(insurance)
+    return this.findOne(savedInsurance.id)
   }
 
   async findAll(query): Promise<PaginatedResponse<Insurance>> {
@@ -51,29 +78,32 @@ export class InsuranceService {
       limit: query.limit ? parseInt(query.limit as string, 10) : 10,
     }
 
-    const where = {
-      deletedAt: query.includeInactive ? Not(IsNull()) : IsNull(),
+    const queryBuilder = this.insuranceRepository
+      .createQueryBuilder('insurance')
+      .leftJoinAndSelect('insurance.coverages', 'coverages')
+      .leftJoinAndSelect('coverages.coverage', 'coverage')
+      .leftJoinAndSelect('insurance.benefits', 'benefits')
+      .leftJoinAndSelect('benefits.benefit', 'benefit')
+      .where('insurance.deletedAt IS NULL')
+      .orderBy('insurance.order', 'ASC')
+      .addOrderBy('insurance.createdAt', 'DESC')
+
+    const result = await PaginationService.paginateQueryBuilder(queryBuilder, paginationDto)
+    return {
+      data: result.data,
+      meta: result.meta,
     }
-
-    const order = { order: 'ASC' as const, createdAt: 'DESC' as const }
-
-    const result = await PaginationService.paginate(this.insuranceRepository, where, paginationDto, order)
-
-    if (result.data.length > 0) {
-      result.data = await this.insuranceRepository.find({
-        where: { id: In(result.data.map((insurance) => insurance.id)) },
-        relations: ['coverages', 'benefits'],
-      })
-    }
-
-    return result
   }
 
   async findOne(id: string): Promise<Insurance> {
-    const insurance = await this.insuranceRepository.findOne({
-      where: { id },
-      relations: ['coverages', 'benefits'],
-    })
+    const insurance = await this.insuranceRepository
+      .createQueryBuilder('insurance')
+      .leftJoinAndSelect('insurance.coverages', 'coverages')
+      .leftJoinAndSelect('coverages.coverage', 'coverage')
+      .leftJoinAndSelect('insurance.benefits', 'benefits')
+      .leftJoinAndSelect('benefits.benefit', 'benefit')
+      .where('insurance.id = :id', { id })
+      .getOne()
 
     if (!insurance) {
       throw new NotFoundException(`Insurance with ID ${id} not found`)
@@ -83,30 +113,83 @@ export class InsuranceService {
   }
 
   async update(id: string, updateInsuranceDto: UpdateInsuranceDto): Promise<Insurance> {
-    const { coverageIds, benefitIds, ...insuranceData } = updateInsuranceDto
+    const { coverages: coveragesDto, benefits: benefitsDto, ...insuranceData } = updateInsuranceDto
     const insurance = await this.findOne(id)
+    const updatedInsurance = Object.assign(insurance, insuranceData)
+    await this.insuranceRepository.save(updatedInsurance)
 
-    if (coverageIds) {
-      const coverages = await this.coverageRepository.findBy({ id: In(coverageIds) })
-      if (coverages.length !== coverageIds.length) {
-        throw new NotFoundException('One or more coverages not found')
+    if (coveragesDto) {
+      const coveragesToDelete = coveragesDto.filter((coverage) => coverage.delete)
+      const coveragesToUpdate = coveragesDto.filter((coverage) => !coverage.delete)
+
+      console.log('coveragesToDelete', coveragesToDelete)
+      console.log('coveragesToUpdate', coveragesToUpdate)
+
+      if (coveragesToDelete.length > 0) {
+        await this.coverageRelationRepository.softDelete({
+          insurance: { id },
+          coverage: { id: In(coveragesToDelete.map((c) => c.id)) },
+        })
       }
-      insurance.coverages = coverages
+
+      if (coveragesToUpdate.length > 0) {
+        const coverages = await this.coverageRepository.findBy({
+          id: In(coveragesToUpdate.map((coverage) => coverage.id)),
+        })
+        if (coverages.length !== coveragesToUpdate.length) {
+          throw new NotFoundException('One or more coverages not found')
+        }
+
+        const coverageRelations = coveragesToUpdate.map((coverageDto) => {
+          const coverage = coverages.find((c) => c.id === coverageDto.id)
+          return this.coverageRelationRepository.create({
+            insurance: updatedInsurance,
+            coverage,
+            coverageAmount: coverageDto.coverageAmount ?? 0,
+            additionalCost: coverageDto.additionalCost ?? 0,
+          })
+        })
+
+        await this.coverageRelationRepository.save(coverageRelations)
+      }
     }
 
-    if (benefitIds) {
-      const benefits = await this.benefitRepository.findBy({ id: In(benefitIds) })
-      if (benefits.length !== benefitIds.length) {
-        throw new NotFoundException('One or more benefits not found')
+    if (benefitsDto) {
+      const benefitsToDelete = benefitsDto.filter((benefit) => benefit.delete)
+      const benefitsToUpdate = benefitsDto.filter((benefit) => !benefit.delete)
+
+      if (benefitsToDelete.length > 0) {
+        await this.benefitRelationRepository.softDelete({
+          insurance: { id },
+          benefit: { id: In(benefitsToDelete.map((b) => b.id)) },
+        })
       }
-      insurance.benefits = benefits
+
+      if (benefitsToUpdate.length > 0) {
+        const benefits = await this.benefitRepository.findBy({ id: In(benefitsToUpdate.map((benefit) => benefit.id)) })
+        if (benefits.length !== benefitsToUpdate.length) {
+          throw new NotFoundException('One or more benefits not found')
+        }
+
+        const benefitRelations = benefitsToUpdate.map((benefitDto) => {
+          const benefit = benefits.find((b) => b.id === benefitDto.id)
+          return this.benefitRelationRepository.create({
+            insurance: updatedInsurance,
+            benefit,
+            additionalCost: benefitDto.additionalCost ?? 0,
+          })
+        })
+
+        await this.benefitRelationRepository.save(benefitRelations)
+      }
     }
 
-    const updated = Object.assign(insurance, insuranceData)
-    return await this.insuranceRepository.save(updated)
+    return this.findOne(id)
   }
 
   async remove(id: string): Promise<void> {
+    await this.coverageRelationRepository.delete({ insurance: { id } })
+    await this.benefitRelationRepository.delete({ insurance: { id } })
     await this.insuranceRepository.softDelete(id)
   }
 }

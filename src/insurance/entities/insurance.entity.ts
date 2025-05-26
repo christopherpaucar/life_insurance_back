@@ -1,7 +1,7 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm'
+import { Entity, Column, OneToMany } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
-import { InsuranceCoverage } from './insurance-coverage.entity'
-import { InsuranceBenefit } from './insurance-benefit.entity'
+import { InsuranceCoverageRelation } from './insurance-coverage-relation.entity'
+import { InsuranceBenefitRelation } from './insurance-benefit-relation.entity'
 
 export enum InsuranceType {
   LIFE = 'life',
@@ -35,7 +35,7 @@ export class Insurance extends BaseEntity {
   requirements: string[]
 
   @Column('int', { default: 0 })
-  rank: number
+  order: number
 
   @Column({
     type: 'enum',
@@ -45,19 +45,9 @@ export class Insurance extends BaseEntity {
   })
   availablePaymentFrequencies: PaymentFrequency[]
 
-  @ManyToMany(() => InsuranceCoverage, (coverage) => coverage.insurances)
-  @JoinTable({
-    name: 'insurance_coverage_relations',
-    joinColumn: { name: 'insurance_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'coverage_id', referencedColumnName: 'id' },
-  })
-  coverages: InsuranceCoverage[]
+  @OneToMany(() => InsuranceCoverageRelation, (relation) => relation.insurance)
+  coverages: InsuranceCoverageRelation[]
 
-  @ManyToMany(() => InsuranceBenefit, (benefit) => benefit.insurances)
-  @JoinTable({
-    name: 'insurance_benefit_relations',
-    joinColumn: { name: 'insurance_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'benefit_id', referencedColumnName: 'id' },
-  })
-  benefits: InsuranceBenefit[]
+  @OneToMany(() => InsuranceBenefitRelation, (relation) => relation.insurance)
+  benefits: InsuranceBenefitRelation[]
 }

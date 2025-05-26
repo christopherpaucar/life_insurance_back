@@ -1,5 +1,38 @@
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator'
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator'
 import { InsuranceType, PaymentFrequency } from '../entities/insurance.entity'
+import { Type } from 'class-transformer'
+
+export class UpdateInsuranceCoverageRelationDto {
+  @IsString()
+  @IsNotEmpty()
+  id: string
+
+  @IsNumber()
+  @IsOptional()
+  coverageAmount?: number
+
+  @IsNumber()
+  @IsOptional()
+  additionalCost?: number
+
+  @IsBoolean()
+  @IsOptional()
+  delete?: boolean
+}
+
+export class UpdateInsuranceBenefitRelationDto {
+  @IsString()
+  @IsNotEmpty()
+  id: string
+
+  @IsNumber()
+  @IsOptional()
+  additionalCost?: number
+
+  @IsBoolean()
+  @IsOptional()
+  delete?: boolean
+}
 
 export class UpdateInsuranceDto {
   @IsString()
@@ -36,12 +69,14 @@ export class UpdateInsuranceDto {
   availablePaymentFrequencies?: PaymentFrequency[]
 
   @IsArray()
-  @IsString({ each: true })
+  @ValidateNested({ each: true })
+  @Type(() => UpdateInsuranceCoverageRelationDto)
   @IsOptional()
-  coverageIds?: string[]
+  coverages?: UpdateInsuranceCoverageRelationDto[]
 
   @IsArray()
-  @IsString({ each: true })
+  @ValidateNested({ each: true })
+  @Type(() => UpdateInsuranceBenefitRelationDto)
   @IsOptional()
-  benefitIds?: string[]
+  benefits?: UpdateInsuranceBenefitRelationDto[]
 }

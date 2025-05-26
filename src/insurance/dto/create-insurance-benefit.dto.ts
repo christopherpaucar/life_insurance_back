@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator'
+import { IsNotEmpty, IsString } from 'class-validator'
 
 export class CreateInsuranceBenefitDto {
   @IsString()
@@ -8,7 +8,4 @@ export class CreateInsuranceBenefitDto {
   @IsString()
   @IsNotEmpty()
   description: string
-
-  @IsNumber()
-  additionalCost: number
 }

@@ -1,4 +1,4 @@
-import { Repository, FindOptionsWhere, ObjectLiteral, FindOptionsOrder } from 'typeorm'
+import { Repository, FindOptionsWhere, ObjectLiteral, FindOptionsOrder, SelectQueryBuilder } from 'typeorm'
 import { PaginationDto } from '../dto/pagination.dto'
 import { PaginatedResponse } from '../interfaces/pagination.interface'
 
@@ -15,6 +15,26 @@ export class PaginationService {
       skip: (page - 1) * limit,
       take: limit,
     })
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  }
+
+  static async paginateQueryBuilder<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    { page = 1, limit = 10 }: PaginationDto,
+  ): Promise<PaginatedResponse<T>> {
+    const [data, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount()
 
     return {
       data,

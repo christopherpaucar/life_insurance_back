@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator'
+import { IsOptional, IsString } from 'class-validator'
 
 export class UpdateInsuranceBenefitDto {
   @IsString()
@@ -8,8 +8,4 @@ export class UpdateInsuranceBenefitDto {
   @IsString()
   @IsOptional()
   description?: string
-
-  @IsNumber()
-  @IsOptional()
-  additionalCost?: number
 }

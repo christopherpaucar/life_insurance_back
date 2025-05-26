@@ -10,9 +10,20 @@ import { Insurance } from './entities/insurance.entity'
 import { InsuranceCoverage } from './entities/insurance-coverage.entity'
 import { InsuranceBenefit } from './entities/insurance-benefit.entity'
 import { AuthModule } from '../auth/auth.module'
+import { InsuranceBenefitRelation } from './entities/insurance-benefit-relation.entity'
+import { InsuranceCoverageRelation } from './entities/insurance-coverage-relation.entity'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Insurance, InsuranceCoverage, InsuranceBenefit]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([
+      Insurance,
+      InsuranceCoverage,
+      InsuranceBenefit,
+      InsuranceBenefitRelation,
+      InsuranceCoverageRelation,
+    ]),
+    AuthModule,
+  ],
   controllers: [InsuranceController, InsuranceCoverageController, InsuranceBenefitController],
   providers: [InsuranceService, InsuranceCoverageService, InsuranceBenefitService],
   exports: [InsuranceService, InsuranceCoverageService, InsuranceBenefitService],
