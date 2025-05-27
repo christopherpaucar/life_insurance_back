@@ -6,6 +6,7 @@ import { PaymentFrequency } from '../../insurance/entities/insurance-price.entit
 import { addMonths, addYears } from 'date-fns'
 import { Transaction, TransactionStatus } from '../entities/transaction.entity'
 import { PaymentMethod } from '../entities/payment-method.entity'
+import { DateUtils } from '../../common/utils/date.utils'
 
 @Injectable()
 export class PaymentService {
@@ -32,13 +33,13 @@ export class PaymentService {
 
     switch (frequency) {
       case PaymentFrequency.MONTHLY:
-        numberOfPayments = this.calculateMonthsBetween(startDate, endDate)
+        numberOfPayments = DateUtils.monthsBetween(startDate, endDate)
         break
       case PaymentFrequency.QUARTERLY:
-        numberOfPayments = Math.ceil(this.calculateMonthsBetween(startDate, endDate) / 3)
+        numberOfPayments = Math.ceil(DateUtils.monthsBetween(startDate, endDate) / 3)
         break
       case PaymentFrequency.YEARLY:
-        numberOfPayments = Math.ceil(this.calculateMonthsBetween(startDate, endDate) / 12)
+        numberOfPayments = Math.ceil(DateUtils.monthsBetween(startDate, endDate) / 12)
         break
       default:
         numberOfPayments = 1
@@ -63,8 +64,6 @@ export class PaymentService {
         }
       }
 
-      // if it is the last payment, the amount will be the remaining amount
-      // otherwise, the amount will be the installment amount
       const transaction = this.transactionRepository.create({
         amount:
           i === numberOfPayments - 1
@@ -131,13 +130,6 @@ export class PaymentService {
       transaction.status = TransactionStatus.FAILED
       await this.transactionRepository.save(transaction)
     }
-  }
-
-  private calculateMonthsBetween(startDate: Date, endDate: Date): number {
-    const years = endDate.getFullYear() - startDate.getFullYear()
-    const months = endDate.getMonth() - startDate.getMonth()
-
-    return years * 12 + months + 1
   }
 
   async processDunning() {

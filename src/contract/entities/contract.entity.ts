@@ -11,7 +11,6 @@ import { Transaction } from './transaction.entity'
 export enum ContractStatus {
   DRAFT = 'draft',
   AWAITING_CLIENT_CONFIRMATION = 'awaiting_client_confirmation',
-  PENDING_SIGNATURE = 'pending_signature',
   PENDING_BASIC_DOCUMENTS = 'pending_basic_documents',
   ACTIVE = 'active',
   EXPIRED = 'expired',
@@ -38,9 +37,6 @@ export class Contract extends BaseEntity {
 
   @Column({ type: 'enum', enum: PaymentFrequency })
   paymentFrequency: PaymentFrequency
-
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
-  installmentAmount: number
 
   @Column({ nullable: true })
   signatureUrl: string

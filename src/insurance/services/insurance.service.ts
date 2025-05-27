@@ -117,7 +117,7 @@ export class InsuranceService {
 
     const result = await PaginationService.paginateQueryBuilder(queryBuilder, paginationDto)
     return {
-      data: result.data,
+      data: result.data.map((insurance) => this.transformDecimalFields(insurance)),
       meta: result.meta,
     }
   }
@@ -137,7 +137,7 @@ export class InsuranceService {
       throw new NotFoundException(`Insurance with ID ${id} not found`)
     }
 
-    return insurance
+    return this.transformDecimalFields(insurance)
   }
 
   async update(id: string, updateInsuranceDto: UpdateInsuranceDto): Promise<Insurance> {
@@ -219,5 +219,34 @@ export class InsuranceService {
     await this.coverageRelationRepository.delete({ insurance: { id } })
     await this.benefitRelationRepository.delete({ insurance: { id } })
     await this.insuranceRepository.softDelete(id)
+  }
+
+  /**
+   * Useful to transform decimal fields to numbers
+   *
+   * @param insurance
+   * @returns
+   */
+  private transformDecimalFields(insurance: Insurance): Insurance {
+    if (insurance.coverages) {
+      insurance.coverages = insurance.coverages.map((coverage) => ({
+        ...coverage,
+        coverageAmount: Number(coverage.coverageAmount),
+        additionalCost: Number(coverage.additionalCost),
+      }))
+    }
+    if (insurance.benefits) {
+      insurance.benefits = insurance.benefits.map((benefit) => ({
+        ...benefit,
+        additionalCost: Number(benefit.additionalCost),
+      }))
+    }
+    if (insurance.prices) {
+      insurance.prices = insurance.prices.map((price) => ({
+        ...price,
+        price: Number(price.price),
+      }))
+    }
+    return insurance
   }
 }

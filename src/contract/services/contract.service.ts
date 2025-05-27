@@ -17,6 +17,7 @@ import { PaymentFrequency } from '../../insurance/entities/insurance-price.entit
 import { ActivateContractDto } from '../dto/activate-contract.dto'
 import { InsuranceCoverageRelation } from '../../insurance/entities/insurance-coverage-relation.entity'
 import { InsuranceBenefitRelation } from '../../insurance/entities/insurance-benefit-relation.entity'
+import { DateUtils } from '../../common/utils/date.utils'
 
 @Injectable()
 export class ContractService {
@@ -51,7 +52,6 @@ export class ContractService {
       notes: createContractDto.notes,
       user: { id: currentUser.id },
       insurance: { id: createContractDto.insuranceId },
-      installmentAmount: 0,
     })
 
     const savedContract = await this.contractRepository.save(contract)
@@ -94,7 +94,7 @@ export class ContractService {
       throw new BadRequestException('Contract is already active')
     }
 
-    const insurance = await this.insuranceService.findOne(contract.insurance.id)
+    const insurance = await this.insuranceService.findOne(contract.insurance as unknown as string)
     if (!insurance) {
       throw new NotFoundException('Insurance not found')
     }
@@ -144,23 +144,16 @@ export class ContractService {
     return await this.contractRepository.save(contract)
   }
 
-  private calculateMonthsBetween(startDate: Date, endDate: Date): number {
-    const years = new Date(endDate).getFullYear() - new Date(startDate).getFullYear()
-    const months = new Date(endDate).getMonth() - new Date(startDate).getMonth()
-
-    return years * 12 + months + 1
-  }
-
   private calculatePayments(startDate: Date, endDate: Date, frequency: PaymentFrequency): number {
-    const monthsBetween = this.calculateMonthsBetween(startDate, endDate)
+    const monthsBetween = DateUtils.monthsBetween(startDate, endDate)
 
     switch (frequency) {
       case PaymentFrequency.MONTHLY:
         return monthsBetween
       case PaymentFrequency.QUARTERLY:
-        return monthsBetween / 3
+        return Math.ceil(monthsBetween / 3)
       case PaymentFrequency.YEARLY:
-        return monthsBetween / 12
+        return Math.ceil(monthsBetween / 12)
       default:
         return monthsBetween
     }
@@ -177,10 +170,11 @@ export class ContractService {
     const frecuencyMultiplier =
       frequency === PaymentFrequency.QUARTERLY ? 3 : frequency === PaymentFrequency.YEARLY ? 12 : 1
 
-    const coveragesPrice = coverages.reduce((acc, coverage) => acc + coverage.additionalCost * frecuencyMultiplier, 0)
-    const benefitsPrice = benefits.reduce((acc, benefit) => acc + benefit.additionalCost * frecuencyMultiplier, 0)
+    const coveragesPrice =
+      coverages?.reduce((acc, coverage) => acc + coverage.additionalCost * frecuencyMultiplier, 0) ?? 0
+    const benefitsPrice = benefits?.reduce((acc, benefit) => acc + benefit.additionalCost * frecuencyMultiplier, 0) ?? 0
 
-    const totalAmount = price * (coveragesPrice + benefitsPrice) * this.calculatePayments(startDate, endDate, frequency)
+    const totalAmount = (price + coveragesPrice + benefitsPrice) * this.calculatePayments(startDate, endDate, frequency)
 
     return Math.round(totalAmount * 100) / 100
   }
@@ -302,8 +296,8 @@ export class ContractService {
   async signContract(id: string, signContractDto: SignContractDto): Promise<Contract> {
     const contract = await this.findOne(id)
 
-    if (contract.status !== ContractStatus.PENDING_SIGNATURE) {
-      throw new BadRequestException('Contract must be in PENDING_SIGNATURE status to be signed')
+    if (contract.status !== ContractStatus.AWAITING_CLIENT_CONFIRMATION) {
+      throw new BadRequestException('Contract must be in AWAITING_CLIENT_CONFIRMATION status to be signed')
     }
 
     const signatureUrl = await this.signatureService.processSignature(signContractDto.signatureData)
@@ -344,8 +338,8 @@ export class ContractService {
   async changeStatus(id: string, status: ContractStatus): Promise<Contract> {
     const contract = await this.findOne(id)
 
-    if (status === ContractStatus.ACTIVE && contract.status !== ContractStatus.PENDING_SIGNATURE) {
-      throw new BadRequestException('Contract must be signed before becoming active')
+    if (status === ContractStatus.ACTIVE && contract.status !== ContractStatus.AWAITING_CLIENT_CONFIRMATION) {
+      throw new BadRequestException('Contract must be confirmed before becoming active')
     }
 
     contract.status = status
