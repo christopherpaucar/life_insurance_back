@@ -126,3 +126,62 @@ To run SonarQube analysis, you need to set the `SONAR_TOKEN` environment variabl
 chmod +x run-sonar.sh
 ./run-sonar.sh <your-sonar-token>
 ```
+
+# Insurance Plans
+
+## Available Insurance Plans
+
+### 1. Basic Health Insurance
+- **Type**: Health
+- **Description**: Basic medical coverage for consultations and emergencies
+- **Requirements**:
+  - Minimum age: 18 years
+  - No pre-existing conditions
+- **Base Price**: $50.00/month
+- **Coverage Amount**: $25,000
+- **Additional Coverage Cost**: $10
+- **Additional Benefit Cost**: $10
+- **Payment Frequencies**:
+  - Monthly: $50.00
+  - Quarterly: $150.00
+  - Yearly: $600.00
+
+### 2. Premium Life Insurance
+- **Type**: Life
+- **Description**: Complete financial protection for your family
+- **Requirements**:
+  - Minimum age: 25 years
+  - Medical examination required
+- **Base Price**: $100.00/month
+- **Coverage Amount**: $50,000
+- **Additional Coverage Cost**: $15
+- **Additional Benefit Cost**: $15
+- **Payment Frequencies**:
+  - Monthly: $100.00
+  - Quarterly: $300.00
+  - Yearly: $1,200.00
+
+### 3. Comprehensive Health Insurance
+- **Type**: Health
+- **Description**: Complete medical coverage with additional benefits
+- **Requirements**:
+  - Minimum age: 18 years
+  - No pre-existing conditions
+  - Permanent residence
+- **Base Price**: $150.00/month
+- **Coverage Amount**: $100,000
+- **Additional Coverage Cost**: $25
+- **Additional Benefit Cost**: $20
+- **Payment Frequencies**:
+  - Monthly: $150.00
+  - Quarterly: $450.00
+  - Yearly: $1,800.00
+
+## Features
+
+Each insurance plan includes:
+- Multiple payment frequency options
+- Coverage relations with specific amounts
+- Benefit relations with additional costs
+- Custom requirements based on plan type
+- Progressive pricing based on coverage level
