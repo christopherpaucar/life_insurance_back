@@ -2,18 +2,21 @@ import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm'
 import { BaseEntity } from '../../common/entities/base.entity'
 import { Insurance } from '../../insurance/entities/insurance.entity'
 import { Beneficiary } from './beneficiary.entity'
-import { PaymentFrequency } from '../../insurance/entities/insurance.entity'
+import { PaymentFrequency } from '../../insurance/entities/insurance-price.entity'
 import { Attachment } from './attachment.entity'
-import { Payment } from './payment.entity'
 import { User } from '../../auth/entities/user.entity'
+import { PaymentMethod } from './payment-method.entity'
+import { Transaction } from './transaction.entity'
 
 export enum ContractStatus {
   DRAFT = 'draft',
+  AWAITING_CLIENT_CONFIRMATION = 'awaiting_client_confirmation',
   PENDING_SIGNATURE = 'pending_signature',
   PENDING_BASIC_DOCUMENTS = 'pending_basic_documents',
   ACTIVE = 'active',
   EXPIRED = 'expired',
   CANCELLED = 'cancelled',
+  INACTIVE = 'inactive',
 }
 
 @Entity('contracts')
@@ -62,6 +65,10 @@ export class Contract extends BaseEntity {
   @OneToMany(() => Attachment, (attachment) => attachment.contract, { cascade: true })
   attachments: Attachment[]
 
-  @OneToMany(() => Payment, (payment) => payment.contract, { cascade: true })
-  payments: Payment[]
+  @ManyToOne(() => PaymentMethod)
+  @JoinColumn({ name: 'payment_method_id' })
+  paymentMethod: PaymentMethod
+
+  @OneToMany(() => Transaction, (transaction) => transaction.contract, { cascade: true })
+  transactions: Transaction[]
 }

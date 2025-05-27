@@ -1,20 +1,28 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, LessThan } from 'typeorm'
-import { Contract } from '../entities/contract.entity'
-import { Payment, PaymentStatus } from '../entities/payment.entity'
-import { PaymentFrequency } from '../../insurance/entities/insurance.entity'
+import { Repository, LessThan, LessThanOrEqual } from 'typeorm'
+import { Contract, ContractStatus } from '../entities/contract.entity'
+import { PaymentFrequency } from '../../insurance/entities/insurance-price.entity'
 import { addMonths, addYears } from 'date-fns'
+import { Transaction, TransactionStatus } from '../entities/transaction.entity'
+import { PaymentMethod } from '../entities/payment-method.entity'
 
 @Injectable()
 export class PaymentService {
+  private readonly MAX_RETRY_COUNT = 4
+  private readonly RETRY_INTERVAL_DAYS = 4
+
   constructor(
-    @InjectRepository(Payment)
-    private paymentRepository: Repository<Payment>,
+    @InjectRepository(Contract)
+    private contractRepository: Repository<Contract>,
+    @InjectRepository(Transaction)
+    private transactionRepository: Repository<Transaction>,
+    @InjectRepository(PaymentMethod)
+    private paymentMethodRepository: Repository<PaymentMethod>,
   ) {}
 
-  async generatePaymentSchedule(contract: Contract): Promise<Payment[]> {
-    const payments: Payment[] = []
+  async generatePaymentSchedule(contract: Contract): Promise<Transaction[]> {
+    const transactions: Transaction[] = []
 
     const startDate = new Date(contract.startDate)
     const endDate = new Date(contract.endDate)
@@ -55,93 +63,163 @@ export class PaymentService {
         }
       }
 
-      const payment = this.paymentRepository.create({
+      // if it is the last payment, the amount will be the remaining amount
+      // otherwise, the amount will be the installment amount
+      const transaction = this.transactionRepository.create({
         amount:
           i === numberOfPayments - 1
             ? contract.totalAmount - installmentAmount * (numberOfPayments - 1)
             : installmentAmount,
-        dueDate,
-        status: PaymentStatus.PENDING,
+        status: TransactionStatus.PENDING,
+        nextPaymentDate: dueDate,
         contract,
       })
 
-      payments.push(payment)
+      transactions.push(transaction)
     }
 
-    await this.paymentRepository.save(payments)
-    return payments
+    await this.transactionRepository.save(transactions)
+    return transactions
   }
 
   async recordPayment(
     paymentId: string,
     paymentData: {
-      status: PaymentStatus
-      paymentMethod?: string
-      transactionId?: string
+      status: TransactionStatus
       notes?: string
     },
-  ): Promise<Payment> {
-    const payment = await this.paymentRepository.findOne({
+  ): Promise<Transaction> {
+    const transaction = await this.transactionRepository.findOne({
       where: { id: paymentId },
-      relations: ['contract'],
+      relations: ['contract', 'contract.paymentMethod'],
     })
 
-    if (!payment) {
-      throw new Error(`Payment with ID ${paymentId} not found`)
+    if (!transaction) {
+      throw new Error(`Transaction with ID ${paymentId} not found`)
     }
 
-    payment.status = paymentData.status
+    transaction.status = paymentData.status
 
-    if (paymentData.paymentMethod) {
-      payment.paymentMethod = paymentData.paymentMethod as any
+    if (transaction.status === TransactionStatus.SUCCESS) {
+      transaction.status = TransactionStatus.SUCCESS
     }
 
-    if (paymentData.transactionId) {
-      payment.transactionId = paymentData.transactionId
-    }
-
-    if (paymentData.notes) {
-      payment.notes = paymentData.notes
-    }
-
-    if (payment.status === PaymentStatus.PAID) {
-      payment.paidAt = new Date()
-    }
-
-    return await this.paymentRepository.save(payment)
+    return await this.transactionRepository.save(transaction)
   }
 
   async deletePaymentsForContract(contractId: string): Promise<void> {
-    await this.paymentRepository.delete({ contract: { id: contractId } })
+    await this.transactionRepository.delete({ contract: { id: contractId } })
   }
 
-  async findOverduePayments(): Promise<Payment[]> {
+  async findOverduePayments(): Promise<Transaction[]> {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    return this.paymentRepository.find({
+    return this.transactionRepository.find({
       where: {
-        status: PaymentStatus.PENDING,
-        dueDate: LessThan(today),
+        status: TransactionStatus.PENDING,
+        nextPaymentDate: LessThan(today),
       },
-      relations: ['contract', 'contract.client'],
+      relations: ['contract', 'contract.user'],
     })
   }
 
   async updateOverduePayments(): Promise<void> {
     const overduePayments = await this.findOverduePayments()
 
-    for (const payment of overduePayments) {
-      payment.status = PaymentStatus.OVERDUE
-      await this.paymentRepository.save(payment)
+    for (const transaction of overduePayments) {
+      transaction.status = TransactionStatus.FAILED
+      await this.transactionRepository.save(transaction)
     }
   }
 
-  // Helper method to calculate months between two dates
   private calculateMonthsBetween(startDate: Date, endDate: Date): number {
     const years = endDate.getFullYear() - startDate.getFullYear()
     const months = endDate.getMonth() - startDate.getMonth()
 
-    return years * 12 + months + 1 // +1 to include the start month
+    return years * 12 + months + 1
+  }
+
+  async processDunning() {
+    const pendingTransactions = await this.transactionRepository.find({
+      where: [
+        { status: TransactionStatus.PENDING },
+        { status: TransactionStatus.FAILED, retryCount: LessThanOrEqual(this.MAX_RETRY_COUNT) },
+      ],
+      relations: ['contract', 'contract.paymentMethod'],
+    })
+
+    for (const transaction of pendingTransactions) {
+      await this.processTransaction(transaction)
+    }
+  }
+
+  private async processTransaction(transaction: Transaction) {
+    const contract = transaction.contract
+    const paymentMethod = contract.paymentMethod
+
+    if (!paymentMethod?.isValid) {
+      await this.handleFailedPayment(transaction)
+      return
+    }
+
+    try {
+      await this.processPayment(transaction)
+      await this.handleSuccessfulPayment(transaction)
+    } catch (error) {
+      console.error('Error processing transaction:', error)
+      await this.handleFailedPayment(transaction)
+    }
+  }
+
+  private async processPayment(transaction: Transaction) {
+    return Promise.resolve()
+  }
+
+  private async handleSuccessfulPayment(transaction: Transaction) {
+    transaction.status = TransactionStatus.SUCCESS
+    transaction.nextPaymentDate = this.calculateNextPaymentDate(transaction.contract)
+    await this.transactionRepository.save(transaction)
+  }
+
+  private async handleFailedPayment(transaction: Transaction) {
+    transaction.retryCount += 1
+    transaction.status = TransactionStatus.FAILED
+
+    if (transaction.retryCount >= this.MAX_RETRY_COUNT) {
+      await this.deactivateContract(transaction.contract)
+    } else {
+      transaction.nextRetryPaymentDate = this.calculateNextRetryDate()
+      transaction.status = TransactionStatus.IN_RETRY
+    }
+
+    await this.transactionRepository.save(transaction)
+  }
+
+  private async deactivateContract(contract: Contract) {
+    contract.status = ContractStatus.INACTIVE
+    await this.contractRepository.save(contract)
+  }
+
+  private calculateNextPaymentDate(contract: Contract): Date {
+    const date = new Date()
+    switch (contract.paymentFrequency) {
+      case PaymentFrequency.MONTHLY:
+        date.setMonth(date.getMonth() + 1)
+        break
+      case PaymentFrequency.QUARTERLY:
+        date.setMonth(date.getMonth() + 3)
+        break
+      case PaymentFrequency.YEARLY:
+        date.setFullYear(date.getFullYear() + 1)
+        break
+    }
+    return date
+  }
+
+  private calculateNextRetryDate(): Date {
+    const date = new Date()
+    date.setDate(date.getDate() + this.RETRY_INTERVAL_DAYS)
+    return date
   }
 }

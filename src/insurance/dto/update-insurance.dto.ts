@@ -1,6 +1,7 @@
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator'
-import { InsuranceType, PaymentFrequency } from '../entities/insurance.entity'
+import { InsuranceType } from '../entities/insurance.entity'
 import { Type } from 'class-transformer'
+import { PaymentFrequency } from '../entities/insurance-price.entity'
 
 export class UpdateInsuranceCoverageRelationDto {
   @IsString()

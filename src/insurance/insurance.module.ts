@@ -12,6 +12,7 @@ import { InsuranceBenefit } from './entities/insurance-benefit.entity'
 import { AuthModule } from '../auth/auth.module'
 import { InsuranceBenefitRelation } from './entities/insurance-benefit-relation.entity'
 import { InsuranceCoverageRelation } from './entities/insurance-coverage-relation.entity'
+import { InsurancePrice } from './entities/insurance-price.entity'
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { InsuranceCoverageRelation } from './entities/insurance-coverage-relatio
       InsuranceBenefit,
       InsuranceBenefitRelation,
       InsuranceCoverageRelation,
+      InsurancePrice,
     ]),
     AuthModule,
   ],

@@ -11,6 +11,7 @@ import { InsuranceCoverage } from '../entities/insurance-coverage.entity'
 import { InsuranceBenefit } from '../entities/insurance-benefit.entity'
 import { InsuranceBenefitRelation } from '../entities/insurance-benefit-relation.entity'
 import { InsuranceCoverageRelation } from '../entities/insurance-coverage-relation.entity'
+import { InsurancePrice, PaymentFrequency } from '../entities/insurance-price.entity'
 
 @Injectable()
 export class InsuranceService {
@@ -25,12 +26,37 @@ export class InsuranceService {
     private coverageRelationRepository: Repository<InsuranceCoverageRelation>,
     @InjectRepository(InsuranceBenefitRelation)
     private benefitRelationRepository: Repository<InsuranceBenefitRelation>,
+    @InjectRepository(InsurancePrice)
+    private insurancePriceRepository: Repository<InsurancePrice>,
   ) {}
 
   async create(createInsuranceDto: CreateInsuranceDto): Promise<Insurance> {
-    const { coverages: coveragesDto, benefits: benefitsDto, ...insuranceData } = createInsuranceDto
+    const {
+      coverages: coveragesDto,
+      benefits: benefitsDto,
+      basePrice,
+      availablePaymentFrequencies,
+      ...insuranceData
+    } = createInsuranceDto
     const insurance = this.insuranceRepository.create(insuranceData)
     const savedInsurance = await this.insuranceRepository.save(insurance)
+
+    const prices = availablePaymentFrequencies.map((frequency) => {
+      let price = basePrice
+      if (frequency === PaymentFrequency.QUARTERLY) {
+        price = basePrice * 3
+      } else if (frequency === PaymentFrequency.YEARLY) {
+        price = basePrice * 12
+      }
+
+      return this.insurancePriceRepository.create({
+        insurance: savedInsurance,
+        price,
+        frequency,
+      })
+    })
+
+    await this.insurancePriceRepository.save(prices)
 
     if (coveragesDto?.length) {
       const coverages = await this.coverageRepository.findBy({ id: In(coveragesDto.map((coverage) => coverage.id)) })
@@ -83,6 +109,7 @@ export class InsuranceService {
       .leftJoinAndSelect('insurance.coverages', 'coverages')
       .leftJoinAndSelect('coverages.coverage', 'coverage')
       .leftJoinAndSelect('insurance.benefits', 'benefits')
+      .leftJoinAndSelect('insurance.prices', 'prices')
       .leftJoinAndSelect('benefits.benefit', 'benefit')
       .where('insurance.deletedAt IS NULL')
       .orderBy('insurance.order', 'ASC')
@@ -102,6 +129,7 @@ export class InsuranceService {
       .leftJoinAndSelect('coverages.coverage', 'coverage')
       .leftJoinAndSelect('insurance.benefits', 'benefits')
       .leftJoinAndSelect('benefits.benefit', 'benefit')
+      .leftJoinAndSelect('insurance.prices', 'prices')
       .where('insurance.id = :id', { id })
       .getOne()
 

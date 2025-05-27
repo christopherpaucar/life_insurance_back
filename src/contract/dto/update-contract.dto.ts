@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsNumber,
   IsDateString,
   IsEnum,
   IsUUID,
@@ -8,10 +7,11 @@ import {
   ValidateNested,
   ArrayMinSize,
   IsArray,
+  IsNumber,
 } from 'class-validator'
 import { Type } from 'class-transformer'
 import { ContractStatus } from '../entities/contract.entity'
-import { PaymentFrequency } from '../../insurance/entities/insurance.entity'
+import { PaymentFrequency } from '../../insurance/entities/insurance-price.entity'
 
 class UpdateBeneficiaryDto {
   @IsString()
@@ -34,10 +34,6 @@ class UpdateBeneficiaryDto {
 export class UpdateContractDto {
   @IsUUID()
   @IsOptional()
-  clientId?: string
-
-  @IsUUID()
-  @IsOptional()
   insuranceId?: string
 
   @IsDateString()
@@ -47,10 +43,6 @@ export class UpdateContractDto {
   @IsDateString()
   @IsOptional()
   endDate?: string
-
-  @IsNumber()
-  @IsOptional()
-  totalAmount?: number
 
   @IsString()
   @IsOptional()

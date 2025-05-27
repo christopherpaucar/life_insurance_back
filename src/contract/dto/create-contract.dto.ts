@@ -10,8 +10,7 @@ import {
   IsArray,
 } from 'class-validator'
 import { Type } from 'class-transformer'
-import { ContractStatus } from '../entities/contract.entity'
-import { PaymentFrequency } from '../../insurance/entities/insurance.entity'
+import { PaymentFrequency } from '../../insurance/entities/insurance-price.entity'
 
 class CreateBeneficiaryDto {
   @IsString()
@@ -30,9 +29,6 @@ class CreateBeneficiaryDto {
 
 export class CreateContractDto {
   @IsUUID()
-  clientId: string
-
-  @IsUUID()
   insuranceId: string
 
   @IsDateString()
@@ -41,16 +37,8 @@ export class CreateContractDto {
   @IsDateString()
   endDate: string
 
-  @IsNumber()
-  @IsOptional()
-  totalAmount?: number
-
   @IsEnum(PaymentFrequency)
   paymentFrequency: PaymentFrequency
-
-  @IsOptional()
-  @IsEnum(ContractStatus)
-  status?: ContractStatus
 
   @IsOptional()
   @IsArray()

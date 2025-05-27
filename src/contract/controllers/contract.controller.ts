@@ -16,6 +16,7 @@ import { ContractService } from '../services/contract.service'
 import { CreateContractDto } from '../dto/create-contract.dto'
 import { UpdateContractDto } from '../dto/update-contract.dto'
 import { SignContractDto } from '../dto/sign-contract.dto'
+import { ActivateContractDto } from '../dto/activate-contract.dto'
 import { ApiResponseDto } from '../../common/dto/api-response.dto'
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
 import { PermissionGuard } from '../../auth/guards/permission.guard'
@@ -25,8 +26,12 @@ import { AttachmentType } from '../entities/attachment.entity'
 import { FileStorageService } from '../../common/services/file-storage.service'
 import { CurrentUser } from '../../auth/decorators/current-user.decorator'
 import { User } from '../../auth/entities/user.entity'
+import { RolesGuard } from '../../auth/guards/roles.guard'
+import { Roles } from '../../auth/decorators/roles.decorator'
+import { RoleType } from '../../auth/entities/role.entity'
 
 @Controller('contracts')
+@UseGuards(JwtAuthGuard, PermissionGuard, RolesGuard)
 export class ContractController {
   constructor(
     private readonly contractService: ContractService,
@@ -41,10 +46,24 @@ export class ContractController {
     return new ApiResponseDto({ success: true, data: contract })
   }
 
+  @Post(':id/activate')
+  @Roles(RoleType.ADMIN, RoleType.AGENT)
+  async activate(@Param('id') id: string) {
+    await this.contractService.activate(id)
+
+    return new ApiResponseDto({ success: true })
+  }
+
+  @Post(':id/confirm-activation')
+  @Roles(RoleType.CLIENT)
+  async confirmActivation(@Param('id') id: string, @Body() activateContractDto: ActivateContractDto) {
+    await this.contractService.confirmActivation(id, activateContractDto)
+    return new ApiResponseDto({ success: true })
+  }
+
   @Get()
-  @UseGuards(JwtAuthGuard, PermissionGuard)
-  @RequirePermission('contract:read')
-  async findAll(@Query() query, @CurrentUser() user: User): Promise<ApiResponseDto> {
+  @Roles(RoleType.ADMIN, RoleType.AGENT)
+  async findAll(@Query() query: any, @CurrentUser() user: User): Promise<ApiResponseDto> {
     const { contracts, total, page, limit } = await this.contractService.findAll(query, user)
 
     return new ApiResponseDto({
@@ -71,7 +90,7 @@ export class ContractController {
   }
 
   @Put(':id/status')
-  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @Roles(RoleType.ADMIN, RoleType.AGENT)
   @RequirePermission('contract:update')
   async changeStatus(@Param('id') id: string, @Body('status') status: ContractStatus): Promise<ApiResponseDto> {
     const contract = await this.contractService.changeStatus(id, status)
@@ -126,7 +145,7 @@ export class ContractController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @Roles(RoleType.ADMIN)
   @RequirePermission('contract:delete')
   async remove(@Param('id') id: string): Promise<ApiResponseDto> {
     await this.contractService.remove(id)

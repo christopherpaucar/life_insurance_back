@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from
 import { Reflector } from '@nestjs/core'
 import { Observable } from 'rxjs'
 import { User } from '../entities/user.entity'
+import { RoleType } from '../entities/role.entity'
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -19,6 +20,10 @@ export class RolesGuard implements CanActivate {
 
     if (!user || !user.role) {
       throw new UnauthorizedException('User not authenticated or missing role')
+    }
+
+    if (user.role.name === RoleType.SUPER_ADMIN) {
+      return true
     }
 
     const hasRole = requiredRoles.some((role) => role.toLowerCase() === user.role.name.toLowerCase())

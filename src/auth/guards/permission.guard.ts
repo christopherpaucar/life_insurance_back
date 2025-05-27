@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { RoleService } from '../services/role.service'
 import { PERMISSION_KEY } from '../decorators/require-permission.decorator'
-import { Role } from '../entities/role.entity'
+import { Role, RoleType } from '../entities/role.entity'
 import { PermissionType } from '../decorators/require-permission.decorator'
 
 @Injectable()
@@ -26,6 +26,10 @@ export class PermissionGuard implements CanActivate {
 
     if (!user || !user.role) {
       return false
+    }
+
+    if (user.role.name === RoleType.SUPER_ADMIN) {
+      return true
     }
 
     return this.roleService.hasPermission(user.role as Role, requiredPermission)

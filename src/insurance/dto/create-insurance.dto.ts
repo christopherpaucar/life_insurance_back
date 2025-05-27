@@ -1,6 +1,17 @@
-import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator'
-import { InsuranceType, PaymentFrequency } from '../entities/insurance.entity'
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator'
+import { InsuranceType } from '../entities/insurance.entity'
 import { Type } from 'class-transformer'
+import { PaymentFrequency } from '../entities/insurance-price.entity'
 
 export class CreateInsuranceCoverageRelationDto {
   @IsString()
@@ -39,20 +50,21 @@ export class CreateInsuranceDto {
   type: InsuranceType
 
   @IsNumber()
+  @Min(0)
   basePrice: number
 
   @IsArray()
-  @IsString({ each: true })
+  @IsEnum(PaymentFrequency, { each: true })
+  availablePaymentFrequencies: PaymentFrequency[]
+
+  @IsArray()
   @IsOptional()
   requirements?: string[]
 
-  @IsNumber()
+  @IsInt()
+  @Min(0)
   @IsOptional()
   order?: number
-
-  @IsEnum(PaymentFrequency, { each: true })
-  @IsOptional()
-  availablePaymentFrequencies?: PaymentFrequency[]
 
   @IsArray()
   @ValidateNested({ each: true })
