@@ -1,0 +1,1811 @@
+{
+	"info": {
+		"_postman_id": "fd05ce20-45c5-4d42-b2c8-fea95b3d6a93",
+		"name": "Life Insurance API",
+		"description": "API collection for Life Insurance Management System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17015610"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"description": "Authentication and user management endpoints",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"super@super.com\",\n    \"password\": \"12@Lenin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate user and get JWT token"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success flag\", function () {",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has token\", function () {",
+									"    pm.expect(jsonData.data).to.have.property('token');",
+									"    if (jsonData.data.token) {",
+									"        pm.collectionVariables.set(\"token\", jsonData.data.token);",
+									"        console.log(\"Token saved in collection variable\");",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Register Client",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Lenin\",\n    \"email\": \"pepe@pepe.com\",\n    \"password\": \"12@Lenin\",\n    \"role\": \"CLIENTE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new client user"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const jsonData = pm.response.json();",
+									"pm.test(\"Response has success flag\", function () {",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"User data is returned\", function () {",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Register Admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Lenin\",\n    \"email\": \"agent@agent.com\",\n    \"password\": \"12@Lenin\",\n    \"role\": \"AGENTE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register/admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register",
+								"admin"
+							]
+						},
+						"description": "Register a new admin user (requires admin privileges)"
+					}
+				},
+				{
+					"name": "Complete Onboarding",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"birthDate\": \"1990-01-01T00:00:00.000Z\",\n    \"bloodType\": \"A+\",\n    \"gender\": \"male\",\n    \"height\": 175,\n    \"weight\": 70,\n    \"address\": \"123 Main St, City, Country\",\n    \"phoneNumber\": \"+1234567890\",\n    \"emergencyContact\": \"Jane Doe\",\n    \"emergencyPhone\": \"+1987654321\",\n    \"medicalHistory\": {\n        \"allergies\": [],\n        \"chronicConditions\": []\n    },\n    \"lifestyle\": {\n        \"smoking\": false,\n        \"exerciseFrequency\": \"regular\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/onboarding",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"onboarding"
+							]
+						},
+						"description": "Complete user onboarding process"
+					}
+				}
+			]
+		},
+		{
+			"name": "Insurance Management",
+			"description": "Endpoints for managing insurance policies and related entities",
+			"item": [
+				{
+					"name": "Benefits",
+					"description": "Manage insurance benefits",
+					"item": [
+						{
+							"name": "Create Benefit",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Death Benefit\",\n    \"description\": \"Coverage in case of death\",\n    \"amount\": 100000\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/benefits",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"benefits"
+									]
+								},
+								"description": "Create a new insurance benefit"
+							}
+						},
+						{
+							"name": "Get All Benefits",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/benefits",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"benefits"
+									]
+								},
+								"description": "Retrieve all available insurance benefits"
+							}
+						},
+						{
+							"name": "Get Benefit by ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/benefits/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"benefits",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Benefit ID"
+										}
+									]
+								},
+								"description": "Retrieve a specific benefit by ID"
+							}
+						},
+						{
+							"name": "Update Benefit",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Updated Death Benefit\",\n    \"description\": \"Updated coverage in case of death\",\n    \"amount\": 150000\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/benefits/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"benefits",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Benefit ID"
+										}
+									]
+								},
+								"description": "Update an existing benefit"
+							}
+						},
+						{
+							"name": "Delete Benefit",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/benefits/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"benefits",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Benefit ID"
+										}
+									]
+								},
+								"description": "Delete a benefit"
+							}
+						}
+					]
+				},
+				{
+					"name": "Coverages",
+					"description": "Manage insurance coverages",
+					"item": [
+						{
+							"name": "Create Coverage",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Basic Coverage\",\n    \"description\": \"Basic life insurance coverage\",\n    \"type\": \"life\",\n    \"minAmount\": 50000,\n    \"maxAmount\": 200000\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/coverages",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"coverages"
+									]
+								},
+								"description": "Create a new insurance coverage"
+							}
+						},
+						{
+							"name": "Get All Coverages",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/coverages",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"coverages"
+									]
+								},
+								"description": "Retrieve all available insurance coverages"
+							}
+						},
+						{
+							"name": "Get Coverage by ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/coverages/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"coverages",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Coverage ID"
+										}
+									]
+								},
+								"description": "Retrieve a specific coverage by ID"
+							}
+						},
+						{
+							"name": "Update Coverage",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Updated Basic Coverage\",\n    \"description\": \"Updated basic life insurance coverage\",\n    \"type\": \"life\",\n    \"minAmount\": 75000,\n    \"maxAmount\": 250000\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/coverages/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"coverages",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Coverage ID"
+										}
+									]
+								},
+								"description": "Update an existing coverage"
+							}
+						},
+						{
+							"name": "Delete Coverage",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/coverages/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"coverages",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Coverage ID"
+										}
+									]
+								},
+								"description": "Delete a coverage"
+							}
+						}
+					]
+				},
+				{
+					"name": "Insurances",
+					"description": "Manage insurance policies",
+					"item": [
+						{
+							"name": "Create Insurance",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Premium Life Insurance\",\n    \"description\": \"Comprehensive life insurance coverage\",\n    \"type\": \"life\",\n    \"basePrice\": 100,\n    \"availablePaymentFrequencies\": [\"monthly\", \"quarterly\", \"yearly\"],\n    \"requirements\": [\"age >= 18\", \"no pre-existing conditions\"],\n    \"order\": 1,\n    \"coverages\": [\n        {\n            \"id\": \"coverage-id\",\n            \"coverageAmount\": 100000,\n            \"additionalCost\": 50\n        }\n    ],\n    \"benefits\": [\n        {\n            \"id\": \"benefit-id\",\n            \"additionalCost\": 25\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/insurances",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"insurances"
+									]
+								},
+								"description": "Create a new insurance policy"
+							}
+						},
+						{
+							"name": "Get All Insurances",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/insurances",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"insurances"
+									]
+								},
+								"description": "Retrieve all insurance policies"
+							}
+						},
+						{
+							"name": "Get Insurance by ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/insurances/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"insurances",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Insurance ID"
+										}
+									]
+								},
+								"description": "Retrieve a specific insurance policy by ID"
+							}
+						},
+						{
+							"name": "Update Insurance",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Updated Premium Life Insurance\",\n    \"description\": \"Updated comprehensive life insurance coverage\",\n    \"type\": \"life\",\n    \"basePrice\": 150,\n    \"isActive\": true,\n    \"requirements\": [\"age >= 21\", \"no pre-existing conditions\"],\n    \"order\": 2,\n    \"availablePaymentFrequencies\": [\"monthly\", \"quarterly\", \"yearly\"],\n    \"coverages\": [\n        {\n            \"id\": \"coverage-id\",\n            \"coverageAmount\": 150000,\n            \"additionalCost\": 75,\n            \"delete\": false\n        }\n    ],\n    \"benefits\": [\n        {\n            \"id\": \"benefit-id\",\n            \"additionalCost\": 35,\n            \"delete\": false\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/insurances/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"insurances",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Insurance ID"
+										}
+									]
+								},
+								"description": "Update an existing insurance policy"
+							}
+						},
+						{
+							"name": "Delete Insurance",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/insurances/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"insurances",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Insurance ID"
+										}
+									]
+								},
+								"description": "Delete an insurance policy"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Contract Management",
+			"description": "Endpoints for managing insurance contracts",
+			"item": [
+				{
+					"name": "Create Contract",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"insuranceId\": \"5e2594b5-5480-4a62-a89c-ca52b8a0b5c6\",\n    \"startDate\": \"2025-05-19T05:00:00.000Z\",\n    \"endDate\": \"2026-05-19T05:00:00.000Z\",\n    \"paymentFrequency\": \"quarterly\",\n    \"beneficiaries\": [\n        {\n            \"name\": \"lernin\",\n            \"relationship\": \"child\",\n            \"percentage\": 40,\n            \"contactInfo\": \"0979424062\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/contracts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"contracts"
+							]
+						},
+						"description": "Create a new insurance contract"
+					}
+				},
+				{
+					"name": "Get All Contracts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/contracts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"contracts"
+							]
+						},
+						"description": "Retrieve all contracts"
+					}
+				},
+				{
+					"name": "Get Contract by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/contracts/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"contracts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1cb8a5c6-35ab-47c7-8721-1ad28b66b007",
+									"description": "Contract ID"
+								}
+							]
+						},
+						"description": "Retrieve a specific contract by ID"
+					}
+				},
+				{
+					"name": "Activate Contract",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/contracts/:id/activate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"contracts",
+								":id",
+								"activate"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "f30d6cad-6761-41d5-8372-894279cd3f68",
+									"description": "Contract ID"
+								}
+							]
+						},
+						"description": "Activate a contract"
+					}
+				}
+			]
+		},
+		{
+			"name": "User Management",
+			"description": "Endpoints for managing users and roles",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Retrieve all users (admin only)"
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "156e0f5e-34e5-4c0b-9315-fc4159445d00",
+									"description": "User ID"
+								}
+							]
+						},
+						"description": "Retrieve a specific user by ID"
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"agente@agente.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "156e0f5e-34e5-4c0b-9315-fc4159445d00",
+									"description": "User ID"
+								}
+							]
+						},
+						"description": "Update user information"
+					}
+				},
+				{
+					"name": "Update User Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"role\": \"AGENTE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:id/role",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":id",
+								"role"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "156e0f5e-34e5-4c0b-9315-fc4159445d00",
+									"description": "User ID"
+								}
+							]
+						},
+						"description": "Update user role (admin only)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Workflows",
+			"description": "Common business workflows and use cases",
+			"item": [
+				{
+					"name": "New Client Onboarding",
+					"description": "Complete workflow for registering and onboarding a new client",
+					"item": [
+						{
+							"name": "1. Register Client",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass123!\",\n    \"role\": \"CLIENTE\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/auth/register",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"register"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"if (jsonData.data && jsonData.data.token) {",
+											"    pm.collectionVariables.set(\"newClientToken\", jsonData.data.token);",
+											"}",
+											"pm.test(\"Client registered successfully\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "2. Complete Onboarding",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{newClientToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"personalInfo\": {\n        \"firstName\": \"John\",\n        \"lastName\": \"Doe\",\n        \"dateOfBirth\": \"1990-01-01\",\n        \"phone\": \"+1234567890\"\n    },\n    \"address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zipCode\": \"10001\"\n    }\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/auth/onboarding",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"onboarding"
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Insurance Policy Creation",
+					"description": "Complete workflow for creating and activating an insurance policy",
+					"item": [
+						{
+							"name": "1. Create Insurance Policy",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Premium Life Insurance\",\n    \"description\": \"Comprehensive life insurance coverage\",\n    \"type\": \"life\",\n    \"basePrice\": 100,\n    \"availablePaymentFrequencies\": [\"monthly\", \"quarterly\", \"yearly\"],\n    \"requirements\": [\"age >= 18\", \"no pre-existing conditions\"]\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/insurances",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"insurances"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"if (jsonData.data && jsonData.data.id) {",
+											"    pm.collectionVariables.set(\"insuranceId\", jsonData.data.id);",
+											"}",
+											"pm.test(\"Insurance created successfully\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "2. Create Contract",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"insuranceId\": \"{{insuranceId}}\",\n    \"startDate\": \"2024-03-20T00:00:00.000Z\",\n    \"endDate\": \"2025-03-20T00:00:00.000Z\",\n    \"paymentFrequency\": \"monthly\",\n    \"beneficiaries\": [\n        {\n            \"name\": \"Jane Doe\",\n            \"relationship\": \"spouse\",\n            \"percentage\": 100,\n            \"contactInfo\": \"+1234567890\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"if (jsonData.data && jsonData.data.id) {",
+											"    pm.collectionVariables.set(\"contractId\", jsonData.data.id);",
+											"}",
+											"pm.test(\"Contract created successfully\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "3. Activate Contract",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/activate",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"activate"
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Admin User Management",
+					"description": "Complete workflow for managing admin users and permissions",
+					"item": [
+						{
+							"name": "1. Register Admin User",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Admin User\",\n    \"email\": \"admin@example.com\",\n    \"password\": \"AdminPass123!\",\n    \"role\": \"AGENTE\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/auth/register/admin",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"register",
+										"admin"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"if (jsonData.data && jsonData.data.id) {",
+											"    pm.collectionVariables.set(\"adminUserId\", jsonData.data.id);",
+											"}",
+											"pm.test(\"Admin user created successfully\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "2. Update Admin Role",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"role\": \"ADMIN\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{adminUserId}}/role",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{adminUserId}}",
+										"role"
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Contract Activation Flow",
+					"description": "Complete workflow for contract activation with all possible states and roles",
+					"item": [
+						{
+							"name": "1. Agent: Create Contract (DRAFT)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{agentToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"insuranceId\": \"{{insuranceId}}\",\n    \"startDate\": \"2024-03-20T00:00:00.000Z\",\n    \"endDate\": \"2025-03-20T00:00:00.000Z\",\n    \"paymentFrequency\": \"monthly\",\n    \"beneficiaries\": [\n        {\n            \"name\": \"Jane Doe\",\n            \"relationship\": \"spouse\",\n            \"percentage\": 100,\n            \"contactInfo\": \"+1234567890\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"if (jsonData.data && jsonData.data.id) {",
+											"    pm.collectionVariables.set(\"contractId\", jsonData.data.id);",
+											"}",
+											"pm.test(\"Contract created successfully in DRAFT state\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"    pm.expect(jsonData.data.status).to.equal('draft');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "2. Client: Review Contract",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{clientToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "3. Agent: Submit for Client Confirmation",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{agentToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"awaiting_client_confirmation\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/status",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"status"
+									]
+								}
+							}
+						},
+						{
+							"name": "4. Client: Sign Contract",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{clientToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"signature\": \"base64_encoded_signature\",\n    \"signedAt\": \"2024-03-20T10:00:00.000Z\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/sign",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"sign"
+									]
+								}
+							}
+						},
+						{
+							"name": "5. Agent: Upload Basic Documents",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{agentToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "/path/to/document.pdf"
+										},
+										{
+											"key": "type",
+											"value": "IDENTIFICATION",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "Client's ID document",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/attachments",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"attachments"
+									]
+								}
+							}
+						},
+						{
+							"name": "6. Agent: Mark as Pending Basic Documents",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{agentToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"pending_basic_documents\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/status",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"status"
+									]
+								}
+							}
+						},
+						{
+							"name": "7. Client: Confirm Activation",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{clientToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"confirmationCode\": \"123456\",\n    \"paymentMethod\": \"CREDIT_CARD\",\n    \"paymentDetails\": {\n        \"cardNumber\": \"**** **** **** 1234\",\n        \"expiryDate\": \"12/25\"\n    }\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/confirm-activation",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"confirm-activation"
+									]
+								}
+							}
+						},
+						{
+							"name": "8. Agent: Activate Contract",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{agentToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/activate",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"activate"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"pm.test(\"Contract activated successfully\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "9. Agent: Cancel Contract (Optional)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{agentToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"cancelled\",\n    \"cancellationReason\": \"Client requested cancellation\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/contracts/{{contractId}}/status",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"contracts",
+										"{{contractId}}",
+										"status"
+									]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Response time is less than 200ms\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(200);",
+					"});",
+					"",
+					"pm.test(\"Response has success flag\", function () {",
+					"    const jsonData = pm.response.json();",
+					"    pm.expect(jsonData.success).to.be.true;",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"description": "JWT authentication token"
+		},
+		{
+			"key": "newClientToken",
+			"value": "",
+			"description": "Token for newly registered client"
+		},
+		{
+			"key": "insuranceId",
+			"value": "",
+			"description": "ID of created insurance policy"
+		},
+		{
+			"key": "contractId",
+			"value": "",
+			"description": "ID of created contract"
+		},
+		{
+			"key": "adminUserId",
+			"value": "",
+			"description": "ID of created admin user"
+		},
+		{
+			"key": "agentToken",
+			"value": "",
+			"description": "Token for agent user"
+		},
+		{
+			"key": "clientToken",
+			"value": "",
+			"description": "Token for client user"
+		}
+	]
+}
