@@ -18,7 +18,7 @@ export class UserService {
   async findAll(user: User): Promise<User[]> {
     return this.userRepository.find({
       relations: ['role'],
-      select: ['id', 'email'],
+      select: ['id', 'email', 'name'],
       where: { id: Not(user.id) },
     })
   }
@@ -34,6 +34,13 @@ export class UserService {
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id)
+
+    if (updateUserDto.role && updateUserDto.role !== user.role.name) {
+      await this.updateRole(id, updateUserDto.role)
+    }
+
+    delete updateUserDto.role
+
     Object.assign(user, updateUserDto)
     return this.userRepository.save(user)
   }

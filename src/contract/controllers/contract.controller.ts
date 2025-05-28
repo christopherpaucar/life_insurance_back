@@ -62,7 +62,7 @@ export class ContractController {
   }
 
   @Get()
-  @Roles(RoleType.ADMIN, RoleType.AGENT)
+  @Roles(RoleType.ADMIN, RoleType.AGENT, RoleType.CLIENT)
   async findAll(@Query() query: any, @CurrentUser() user: User): Promise<ApiResponseDto> {
     const { contracts, total, page, limit } = await this.contractService.findAll(query, user)
 

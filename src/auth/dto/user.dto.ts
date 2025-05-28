@@ -1,4 +1,5 @@
-import { IsEmail, IsString, IsOptional, MinLength, MaxLength, Matches } from 'class-validator'
+import { IsEmail, IsString, IsOptional, MinLength, MaxLength, Matches, IsEnum } from 'class-validator'
+import { RoleType } from '../entities/role.entity'
 
 export class UpdateUserDto {
   @IsOptional()
@@ -17,4 +18,8 @@ export class UpdateUserDto {
   @MaxLength(32)
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/)
   password?: string
+
+  @IsOptional()
+  @IsEnum(RoleType)
+  role?: RoleType
 }
