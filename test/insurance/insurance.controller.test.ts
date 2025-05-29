@@ -3,11 +3,12 @@ import { InsuranceController } from '../../src/insurance/controllers/insurance.c
 import { InsuranceService } from '../../src/insurance/services/insurance.service'
 import { CreateInsuranceDto } from '../../src/insurance/dto/create-insurance.dto'
 import { UpdateInsuranceDto } from '../../src/insurance/dto/update-insurance.dto'
-import { Insurance, InsuranceType, PaymentFrequency } from '../../src/insurance/entities/insurance.entity'
+import { Insurance, InsuranceType } from '../../src/insurance/entities/insurance.entity'
 import { validate } from 'class-validator'
 import { ApiResponseDto } from '../../src/common/dto/api-response.dto'
 import { NotFoundException } from '@nestjs/common'
 import { PaginatedResponse } from '../../src/common/interfaces/pagination.interface'
+import { PaymentFrequency } from '../../src/insurance/entities/insurance-price.entity'
 
 describe('InsuranceController', () => {
   let insuranceController: InsuranceController
@@ -51,8 +52,8 @@ describe('InsuranceController', () => {
         type: InsuranceType.LIFE,
         basePrice: 100,
         requirements: ['ID', 'Medical Check'],
-        availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
-        rank: 1,
+        availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
+        order: 1,
       }
 
       const mockInsurance = {
@@ -63,7 +64,7 @@ describe('InsuranceController', () => {
         basePrice: 100,
         isActive: true,
         requirements: ['ID', 'Medical Check'],
-        availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
+        availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
         coverages: [],
         benefits: [],
         createdAt: new Date(),
@@ -92,7 +93,7 @@ describe('InsuranceController', () => {
           basePrice: 100,
           isActive: true,
           requirements: [],
-          availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
+          availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
           coverages: [],
           benefits: [],
           createdAt: new Date(),
@@ -106,7 +107,7 @@ describe('InsuranceController', () => {
           basePrice: 200,
           isActive: true,
           requirements: [],
-          availablePaymentFrequencies: [PaymentFrequency.YEARLY],
+          availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
           coverages: [],
           benefits: [],
           createdAt: new Date(),
@@ -147,7 +148,7 @@ describe('InsuranceController', () => {
         basePrice: 100,
         isActive: true,
         requirements: [],
-        availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
+        availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
         coverages: [],
         benefits: [],
         createdAt: new Date(),
@@ -200,7 +201,7 @@ describe('InsuranceController', () => {
         basePrice: 150,
         isActive: true,
         requirements: [],
-        availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
+        availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
         coverages: [],
         benefits: [],
         createdAt: new Date(),

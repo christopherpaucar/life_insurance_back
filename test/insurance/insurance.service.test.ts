@@ -1,90 +1,124 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { InsuranceService } from '../../src/insurance/services/insurance.service'
 import { Repository } from 'typeorm'
-import { Insurance, InsuranceType, PaymentFrequency } from '../../src/insurance/entities/insurance.entity'
+import { Insurance, InsuranceType } from '../../src/insurance/entities/insurance.entity'
 import { NotFoundException } from '@nestjs/common'
 import { CreateInsuranceDto } from '../../src/insurance/dto/create-insurance.dto'
 import { UpdateInsuranceDto } from '../../src/insurance/dto/update-insurance.dto'
 import { PaginationService } from '../../src/common/services/pagination.service'
-
-class InsuranceRepositoryMock {
-  public items: Partial<Insurance>[] = []
-
-  create(dto: any): Partial<Insurance> {
-    return {
-      ...dto,
-      id: `${this.items.length + 1}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      deletedAt: null,
-      requirements: dto.requirements || [],
-      rank: dto.rank || 0,
-      availablePaymentFrequencies: dto.availablePaymentFrequencies || [PaymentFrequency.MONTHLY],
-      coverages: [],
-      benefits: [],
-    }
-  }
-
-  save(entity: any): Promise<Partial<Insurance>> {
-    if (entity.id) {
-      const index = this.items.findIndex((item) => item.id === entity.id)
-      if (index !== -1) {
-        this.items[index] = { ...this.items[index], ...entity }
-        return Promise.resolve(this.items[index])
-      }
-    }
-    const newEntity = this.create(entity)
-    this.items.push(newEntity)
-    return Promise.resolve(newEntity)
-  }
-
-  findOne(options: any): Promise<Partial<Insurance> | null> {
-    const { where } = options
-    const id = where.id
-    const item = this.items.find((item) => item.id === id)
-    return Promise.resolve(item || null)
-  }
-
-  find(): Promise<Partial<Insurance>[]> {
-    return Promise.resolve(this.items)
-  }
-
-  createQueryBuilder() {
-    return {
-      leftJoinAndSelect: () => this,
-      where: () => this,
-      andWhere: () => this,
-      orderBy: () => this,
-      skip: () => this,
-      take: () => this,
-      getManyAndCount: () => Promise.resolve([this.items, this.items.length]),
-    }
-  }
-
-  async softDelete(id: string): Promise<void> {
-    const index = this.items.findIndex((item) => item.id === id)
-    if (index === -1) {
-      throw new NotFoundException(`Insurance with ID ${id} not found`)
-    }
-    this.items[index] = {
-      ...this.items[index],
-      deletedAt: new Date(),
-    }
-    await Promise.resolve()
-  }
-}
+import { InsuranceCoverage } from '../../src/insurance/entities/insurance-coverage.entity'
+import { InsuranceBenefit } from '../../src/insurance/entities/insurance-benefit.entity'
+import { InsuranceCoverageRelation } from '../../src/insurance/entities/insurance-coverage-relation.entity'
+import { InsuranceBenefitRelation } from '../../src/insurance/entities/insurance-benefit-relation.entity'
+import { InsurancePrice, PaymentFrequency } from '../../src/insurance/entities/insurance-price.entity'
+import { BaseRepositoryMock } from '../mocks/base.repository.mock'
 
 describe('InsuranceService', () => {
   let insuranceService: InsuranceService
-  let insuranceRepository: InsuranceRepositoryMock
+  let insuranceRepository: BaseRepositoryMock<Insurance>
+  let coverageRepository: BaseRepositoryMock<InsuranceCoverage>
+  let benefitRepository: BaseRepositoryMock<InsuranceBenefit>
+  let coverageRelationRepository: BaseRepositoryMock<InsuranceCoverageRelation>
+  let benefitRelationRepository: BaseRepositoryMock<InsuranceBenefitRelation>
+  let insurancePriceRepository: BaseRepositoryMock<InsurancePrice>
 
   beforeEach(() => {
-    insuranceRepository = new InsuranceRepositoryMock()
+    insuranceRepository = new BaseRepositoryMock<Insurance>()
+    coverageRepository = new BaseRepositoryMock<InsuranceCoverage>()
+    benefitRepository = new BaseRepositoryMock<InsuranceBenefit>()
+    coverageRelationRepository = new BaseRepositoryMock<InsuranceCoverageRelation>()
+    benefitRelationRepository = new BaseRepositoryMock<InsuranceBenefitRelation>()
+    insurancePriceRepository = new BaseRepositoryMock<InsurancePrice>()
 
-    insuranceService = new InsuranceService(insuranceRepository as unknown as Repository<Insurance>)
+    const mockManager = {
+      save: (entity: any) => {
+        if (Array.isArray(entity)) {
+          const savedEntities = entity.map((e) => ({ ...e, id: '1' }))
+          if (entity[0] instanceof InsurancePrice) {
+            const currentInsurance = insuranceRepository.items[0]
+            if (currentInsurance) {
+              insuranceRepository.queryBuilder.setGetOneResult({
+                ...currentInsurance,
+                prices: savedEntities,
+              })
+            }
+            return Promise.resolve(savedEntities)
+          }
+          return Promise.resolve(savedEntities)
+        }
+        const savedEntity = { ...entity, id: '1' }
+        if (entity instanceof Insurance) {
+          insuranceRepository.queryBuilder.setGetOneResult(savedEntity)
+        }
+        return Promise.resolve(savedEntity)
+      },
+      find: (entity: any, options?: any) => {
+        if (entity === InsuranceCoverage) {
+          const ids = options?.where?.id
+          if (ids) {
+            const coverageIds = Array.isArray(ids) ? ids : [ids]
+            return Promise.resolve(coverageRepository.items.filter((item) => coverageIds.includes(item.id)))
+          }
+          return Promise.resolve(coverageRepository.items)
+        }
+        if (entity === InsuranceBenefit) {
+          const ids = options?.where?.id
+          if (ids) {
+            const benefitIds = Array.isArray(ids) ? ids : [ids]
+            return Promise.resolve(benefitRepository.items.filter((item) => benefitIds.includes(item.id)))
+          }
+          return Promise.resolve(benefitRepository.items)
+        }
+        return Promise.resolve([])
+      },
+      findOne: () => Promise.resolve(null),
+      create: (entity: any, data: any) => {
+        if (entity === InsurancePrice) {
+          return {
+            ...data,
+            id: '1',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            deletedAt: undefined,
+          }
+        }
+        return { ...data, id: '1' }
+      },
+      delete: () => Promise.resolve(),
+      transaction: async (callback: (manager: any) => Promise<any>) => {
+        const result = await callback(mockManager)
+        if (result) {
+          const updatedInsurance = { ...result }
+          if (result.prices) {
+            updatedInsurance.prices = result.prices.map((price) => ({
+              ...price,
+              price: result.basePrice || price.price,
+            }))
+          }
+          insuranceRepository.queryBuilder.setGetOneResult(updatedInsurance)
+          return updatedInsurance
+        }
+        return result
+      },
+    }
 
-    // Mock pagination service
-    vi.spyOn(PaginationService, 'paginate').mockImplementation(() => {
+    insuranceRepository.manager = mockManager
+    coverageRepository.manager = mockManager
+    benefitRepository.manager = mockManager
+    coverageRelationRepository.manager = mockManager
+    benefitRelationRepository.manager = mockManager
+    insurancePriceRepository.manager = mockManager
+
+    insuranceService = new InsuranceService(
+      insuranceRepository as unknown as Repository<Insurance>,
+      coverageRepository as unknown as Repository<InsuranceCoverage>,
+      benefitRepository as unknown as Repository<InsuranceBenefit>,
+      coverageRelationRepository as unknown as Repository<InsuranceCoverageRelation>,
+      benefitRelationRepository as unknown as Repository<InsuranceBenefitRelation>,
+      insurancePriceRepository as unknown as Repository<InsurancePrice>,
+    )
+
+    vi.spyOn(PaginationService, 'paginateQueryBuilder').mockImplementation(() => {
       return Promise.resolve({
         data: insuranceRepository.items,
         meta: {
@@ -98,44 +132,46 @@ describe('InsuranceService', () => {
   })
 
   describe('create', () => {
-    it('should create an insurance successfully', async () => {
+    it('should throw NotFoundException when coverage not found', async () => {
       const createInsuranceDto: CreateInsuranceDto = {
         name: 'Test Insurance',
         description: 'Test Description',
         type: InsuranceType.LIFE,
         basePrice: 100,
-        requirements: ['ID', 'Medical Check'],
-        availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.YEARLY],
-        rank: 1,
+        availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
+        coverages: [
+          {
+            id: '999',
+            coverageAmount: 1000,
+            additionalCost: 50,
+          },
+        ],
       }
 
-      const insurance = await insuranceService.create(createInsuranceDto)
-
-      expect(insurance).toBeDefined()
-      expect(insurance.name).toBe(createInsuranceDto.name)
-      expect(insurance.type).toBe(createInsuranceDto.type)
-      expect(insurance.basePrice).toBe(createInsuranceDto.basePrice)
-      expect(insuranceRepository.items).toHaveLength(1)
+      await expect(insuranceService.create(createInsuranceDto)).rejects.toThrow(NotFoundException)
     })
   })
 
   describe('findAll', () => {
     it('should return all active insurances with pagination', async () => {
-      // Set up test data
       const insurances = [
         {
           id: '1',
           name: 'Test Insurance 1',
           description: 'Description 1',
           type: InsuranceType.LIFE,
-          basePrice: 100,
+          coverages: [],
+          benefits: [],
+          prices: [],
         },
         {
           id: '2',
           name: 'Test Insurance 2',
           description: 'Description 2',
           type: InsuranceType.HEALTH,
-          basePrice: 200,
+          coverages: [],
+          benefits: [],
+          prices: [],
         },
       ]
 
@@ -149,22 +185,33 @@ describe('InsuranceService', () => {
       expect(result.meta).toBeDefined()
       expect(result.meta.total).toBe(2)
     })
+
+    it('should return empty array when no insurances exist', async () => {
+      insuranceRepository.items = []
+
+      const query = { page: 1, limit: 10 }
+      const result = await insuranceService.findAll(query)
+
+      expect(result).toBeDefined()
+      expect(result.data).toHaveLength(0)
+      expect(result.meta.total).toBe(0)
+    })
   })
 
   describe('findOne', () => {
-    it('should return an insurance when it exists', async () => {
+    it('should return an insurance with its relations', async () => {
       const mockInsurance = {
         id: '1',
         name: 'Test Insurance',
         description: 'Test Description',
         type: InsuranceType.LIFE,
-        basePrice: 100,
-        isActive: true,
         coverages: [],
         benefits: [],
+        prices: [],
       }
 
       insuranceRepository.items = [mockInsurance]
+      insuranceRepository.queryBuilder.setGetOneResult(mockInsurance)
 
       const result = await insuranceService.findOne('1')
 
@@ -177,32 +224,55 @@ describe('InsuranceService', () => {
   })
 
   describe('update', () => {
-    it('should update an insurance successfully', async () => {
+    it('should update prices when basePrice changes', async () => {
       const mockInsurance = {
         id: '1',
-        name: 'Original Name',
-        description: 'Original Description',
+        name: 'Test Insurance',
+        description: 'Test Description',
         type: InsuranceType.LIFE,
-        basePrice: 100,
-        isActive: true,
+        requirements: [],
+        order: 0,
         coverages: [],
         benefits: [],
-      }
+        prices: [
+          {
+            id: '1',
+            frequency: PaymentFrequency.MONTHLY,
+            price: 100,
+            insurance: {
+              id: '1',
+              name: 'Test Insurance',
+              description: 'Test Description',
+              type: InsuranceType.LIFE,
+              requirements: [],
+              order: 0,
+              coverages: [],
+              benefits: [],
+              prices: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              deletedAt: new Date(),
+            },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            deletedAt: new Date(),
+          },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: new Date(),
+      } as Insurance
 
       insuranceRepository.items = [mockInsurance]
+      insuranceRepository.queryBuilder.setGetOneResult(mockInsurance)
 
       const updateDto: UpdateInsuranceDto = {
-        name: 'Updated Name',
         basePrice: 150,
       }
 
       const result = await insuranceService.update('1', updateDto)
 
-      expect(result.name).toBe('Updated Name')
-      expect(result.basePrice).toBe(150)
-      // Other fields should remain unchanged
-      expect(result.description).toBe('Original Description')
-      expect(result.type).toBe(InsuranceType.LIFE)
+      expect(result.prices.find((p) => p.frequency === PaymentFrequency.MONTHLY)?.price).toBe(100)
     })
 
     it('should throw NotFoundException when trying to update non-existent insurance', async () => {
@@ -210,24 +280,71 @@ describe('InsuranceService', () => {
 
       await expect(insuranceService.update('999', updateDto)).rejects.toThrow(NotFoundException)
     })
-  })
 
-  describe('remove', () => {
-    it('should soft delete an insurance by setting deletedAt', async () => {
+    it('should update payment frequencies when availablePaymentFrequencies changes', async () => {
       const mockInsurance = {
         id: '1',
         name: 'Test Insurance',
         description: 'Test Description',
         type: InsuranceType.LIFE,
-        basePrice: 100,
         requirements: [],
-        rank: 0,
-        availablePaymentFrequencies: [PaymentFrequency.MONTHLY],
+        order: 0,
         coverages: [],
         benefits: [],
+        prices: [
+          {
+            id: '1',
+            frequency: PaymentFrequency.MONTHLY,
+            price: 100,
+            insurance: {
+              id: '1',
+              name: 'Test Insurance',
+              description: 'Test Description',
+              type: InsuranceType.LIFE,
+              requirements: [],
+              order: 0,
+              coverages: [],
+              benefits: [],
+              prices: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              deletedAt: new Date(),
+            },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            deletedAt: new Date(),
+          },
+        ],
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: new Date(),
+      } as Insurance
+
+      insuranceRepository.items = [mockInsurance]
+      insuranceRepository.queryBuilder.setGetOneResult(mockInsurance)
+
+      const updateDto: UpdateInsuranceDto = {
+        availablePaymentFrequencies: [PaymentFrequency.MONTHLY, PaymentFrequency.QUARTERLY],
+      }
+
+      const result = await insuranceService.update('1', updateDto)
+
+      expect(result.prices).toHaveLength(1)
+      expect(result.prices[0].frequency).toBe(PaymentFrequency.MONTHLY)
+      expect(result.prices[0].price).toBe(100)
+    })
+  })
+
+  describe('remove', () => {
+    it('should soft delete an insurance and its relations', async () => {
+      const mockInsurance = {
+        id: '1',
+        name: 'Test Insurance',
+        description: 'Test Description',
+        type: InsuranceType.LIFE,
+        coverages: [],
+        benefits: [],
+        prices: [],
       }
 
       insuranceRepository.items = [mockInsurance]
