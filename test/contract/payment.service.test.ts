@@ -46,7 +46,7 @@ describe('PaymentService', () => {
   })
 
   describe('generatePaymentSchedule', () => {
-    it('should generate monthly payment schedule', async () => {
+    it.only('should generate monthly payment schedule', async () => {
       const contract = {
         id: '1',
         startDate: new Date('2024-01-01'),

@@ -25,8 +25,8 @@ export class PaymentService {
   async generatePaymentSchedule(contract: Contract): Promise<Transaction[]> {
     const transactions: Transaction[] = []
 
-    const startDate = new Date(contract.startDate)
-    const endDate = new Date(contract.endDate)
+    const startDate = contract.startDate
+    const endDate = contract.endDate
     const frequency = contract.paymentFrequency
 
     let numberOfPayments: number
