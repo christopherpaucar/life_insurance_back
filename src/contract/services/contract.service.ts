@@ -18,6 +18,8 @@ import { ActivateContractDto } from '../dto/activate-contract.dto'
 import { InsuranceCoverageRelation } from '../../insurance/entities/insurance-coverage-relation.entity'
 import { InsuranceBenefitRelation } from '../../insurance/entities/insurance-benefit-relation.entity'
 import { DateUtils } from '../../common/utils/date.utils'
+import { PaymentMethod } from '../entities/payment-method.entity'
+import { FileStorageService } from '../../common/services/file-storage.service'
 
 @Injectable()
 export class ContractService {
@@ -28,9 +30,12 @@ export class ContractService {
     private beneficiaryRepository: Repository<Beneficiary>,
     @InjectRepository(Attachment)
     private attachmentRepository: Repository<Attachment>,
+    @InjectRepository(PaymentMethod)
+    private paymentMethodRepository: Repository<PaymentMethod>,
     private paymentService: PaymentService,
     private signatureService: SignatureService,
     private insuranceService: InsuranceService,
+    private fileStorageService: FileStorageService,
   ) {}
 
   async create(createContractDto: CreateContractDto, currentUser: User): Promise<Contract> {
@@ -94,7 +99,7 @@ export class ContractService {
       throw new BadRequestException('Contract is already active')
     }
 
-    const insurance = await this.insuranceService.findOne(contract.insurance as unknown as string)
+    const insurance = await this.insuranceService.findOne(contract.insurance.id)
     if (!insurance) {
       throw new NotFoundException('Insurance not found')
     }
@@ -122,24 +127,54 @@ export class ContractService {
     return this.findOne(updatedContract.id)
   }
 
-  async confirmActivation(id: string, activateContractDto: ActivateContractDto): Promise<Contract> {
+  async confirmActivation(
+    id: string,
+    activateContractDto: ActivateContractDto,
+    p12File: Express.Multer.File,
+  ): Promise<Contract> {
     const contract = await this.findOne(id)
 
     if (contract.status !== ContractStatus.AWAITING_CLIENT_CONFIRMATION) {
       throw new BadRequestException('Contract must be in awaiting client confirmation status')
     }
 
+    const p12UploadResult = await this.fileStorageService.uploadEntityFile(
+      p12File.buffer ?? Buffer.from(''),
+      'contract',
+      id,
+      AttachmentType.P12,
+      {
+        originalName: p12File.originalname,
+        contentType: p12File.mimetype,
+        size: p12File.size,
+        entityId: id,
+        entityType: 'contract',
+        documentType: AttachmentType.P12,
+        ownerId: contract.user.id,
+        ownerType: 'user',
+      },
+    )
+
+    const paymentMethod = this.paymentMethodRepository.create({
+      type: activateContractDto.paymentMethodType,
+      details: JSON.stringify(activateContractDto.paymentDetails),
+      user: contract.user,
+    })
+
+    await this.paymentMethodRepository.save(paymentMethod)
+
+    contract.paymentMethod = paymentMethod
     contract.status = ContractStatus.ACTIVE
 
-    const contractAttachment = this.attachmentRepository.create({
-      fileName: `Contract_${contract.contractNumber}.pdf`,
-      fileUrl: activateContractDto.documentUrl,
-      type: AttachmentType.CONTRACT,
-      description: 'Signed contract document',
+    const p12Attachment = this.attachmentRepository.create({
+      fileName: p12File.originalname,
+      fileUrl: p12UploadResult.url,
+      type: AttachmentType.P12,
+      description: 'P12 certificate file',
       contract,
     })
 
-    await this.attachmentRepository.save(contractAttachment)
+    await this.attachmentRepository.save(p12Attachment)
 
     return await this.contractRepository.save(contract)
   }
@@ -197,7 +232,8 @@ export class ContractService {
       .leftJoinAndSelect('contract.transactions', 'transactions')
       .leftJoinAndSelect('contract.attachments', 'attachments')
       .loadRelationIdAndMap('contract.user', 'contract.user')
-      .loadRelationIdAndMap('contract.insurance', 'contract.insurance')
+      .leftJoinAndSelect('contract.insurance', 'insurance')
+      .select(['contract', 'beneficiaries', 'transactions', 'attachments', 'insurance.id', 'insurance.name'])
       .skip(skip)
       .take(limit)
       .orderBy('contract.createdAt', 'DESC')
@@ -226,7 +262,8 @@ export class ContractService {
       .leftJoinAndSelect('contract.transactions', 'transactions')
       .leftJoinAndSelect('contract.attachments', 'attachments')
       .loadRelationIdAndMap('contract.user', 'contract.user')
-      .loadRelationIdAndMap('contract.insurance', 'contract.insurance')
+      .leftJoinAndSelect('contract.insurance', 'insurance')
+      .select(['contract', 'beneficiaries', 'transactions', 'attachments', 'insurance.id', 'insurance.name'])
       .where('contract.id = :id', { id })
       .getOne()
 
@@ -282,8 +319,8 @@ export class ContractService {
 
     if (
       updateContractDto.paymentFrequency !== contract.paymentFrequency ||
-      updateContractDto.startDate !== contract.startDate.toISOString() ||
-      updateContractDto.endDate !== contract.endDate.toISOString()
+      updateContractDto?.startDate !== contract.startDate?.toISOString() ||
+      updateContractDto?.endDate !== contract.endDate?.toISOString()
     ) {
       await this.paymentService.deletePaymentsForContract(id)
 

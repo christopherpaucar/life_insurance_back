@@ -4,7 +4,7 @@ import { User } from '../../auth/entities/user.entity'
 
 export enum PaymentMethodType {
   CREDIT_CARD = 'credit_card',
-  BANK_TRANSFER = 'bank_transfer',
+  DEBIT_CARD = 'debit_card',
 }
 
 @Entity('payment_methods')

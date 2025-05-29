@@ -15,7 +15,6 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { ContractService } from '../services/contract.service'
 import { CreateContractDto } from '../dto/create-contract.dto'
 import { UpdateContractDto } from '../dto/update-contract.dto'
-import { SignContractDto } from '../dto/sign-contract.dto'
 import { ActivateContractDto } from '../dto/activate-contract.dto'
 import { ApiResponseDto } from '../../common/dto/api-response.dto'
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
@@ -56,9 +55,14 @@ export class ContractController {
 
   @Post(':id/confirm-activation')
   @Roles(RoleType.CLIENT)
-  async confirmActivation(@Param('id') id: string, @Body() activateContractDto: ActivateContractDto) {
-    await this.contractService.confirmActivation(id, activateContractDto)
-    return new ApiResponseDto({ success: true })
+  @UseInterceptors(FileInterceptor('p12File'))
+  async confirmActivation(
+    @Param('id') id: string,
+    @Body() activateContractDto: ActivateContractDto,
+    @UploadedFile() p12File: Express.Multer.File,
+  ) {
+    const contract = await this.contractService.confirmActivation(id, activateContractDto, p12File)
+    return new ApiResponseDto({ success: true, data: contract })
   }
 
   @Get()
@@ -97,14 +101,6 @@ export class ContractController {
     return new ApiResponseDto({ success: true, data: contract })
   }
 
-  @Put(':id/sign')
-  @UseGuards(JwtAuthGuard, PermissionGuard)
-  @RequirePermission('contract:sign')
-  async signContract(@Param('id') id: string, @Body() signContractDto: SignContractDto): Promise<ApiResponseDto> {
-    const contract = await this.contractService.signContract(id, signContractDto)
-    return new ApiResponseDto({ success: true, data: contract })
-  }
-
   @Post(':id/attachments')
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('contract:upload')
@@ -115,6 +111,8 @@ export class ContractController {
     @Body('type') type: AttachmentType,
     @Body('description') description?: string,
   ): Promise<ApiResponseDto> {
+    console.log('UPLOAD ATTACHMENT ENDPOINT CALLED')
+
     const contract = await this.contractService.findOne(id)
 
     const uploadResult = await this.fileStorageService.uploadEntityFile(

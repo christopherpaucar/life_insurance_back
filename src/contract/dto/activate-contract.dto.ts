@@ -1,11 +1,12 @@
-import { IsNotEmpty, IsString } from 'class-validator'
+import { IsNotEmpty, IsEnum, IsObject } from 'class-validator'
+import { PaymentMethodType } from '../entities/payment-method.entity'
 
 export class ActivateContractDto {
-  @IsString()
+  @IsEnum(PaymentMethodType)
   @IsNotEmpty()
-  signatureData: string
+  paymentMethodType: PaymentMethodType
 
-  @IsString()
+  @IsObject()
   @IsNotEmpty()
-  documentUrl: string
+  paymentDetails: Record<string, any>
 }

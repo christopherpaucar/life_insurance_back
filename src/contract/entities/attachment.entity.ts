@@ -3,12 +3,14 @@ import { BaseEntity } from '../../common/entities/base.entity'
 import { Contract } from './contract.entity'
 
 export enum AttachmentType {
+  CONTRACT = 'contract',
   IDENTIFICATION = 'identification',
+  PROOF_OF_ADDRESS = 'proof_of_address',
+  P12 = 'p12',
   MEDICAL_RECORD = 'medical_record',
   MEDICAL_EXAM = 'medical_exam',
   REIMBURSEMENT = 'reimbursement',
   INVOICE = 'invoice',
-  CONTRACT = 'contract',
 }
 
 @Entity('attachments')
