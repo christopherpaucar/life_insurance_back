@@ -5,4 +5,9 @@ export class InsuranceCoverageRepositoryMock extends BaseRepositoryMock<Insuranc
   constructor() {
     super()
   }
+
+  async remove(entity: InsuranceCoverage): Promise<InsuranceCoverage> {
+    this.items = this.items.filter((item) => item.id !== entity.id)
+    return Promise.resolve(entity)
+  }
 }
