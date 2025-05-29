@@ -7,9 +7,7 @@ import { Attachment, AttachmentType } from '../entities/attachment.entity'
 import { TransactionStatus } from '../entities/transaction.entity'
 import { CreateContractDto } from '../dto/create-contract.dto'
 import { UpdateContractDto } from '../dto/update-contract.dto'
-import { SignContractDto } from '../dto/sign-contract.dto'
 import { PaymentService } from './payment.service'
-import { SignatureService } from './signature.service'
 import { User } from '../../auth/entities/user.entity'
 import { RoleType } from '../../auth/entities/role.entity'
 import { InsuranceService } from '../../insurance/services/insurance.service'
@@ -33,7 +31,6 @@ export class ContractService {
     @InjectRepository(PaymentMethod)
     private paymentMethodRepository: Repository<PaymentMethod>,
     private paymentService: PaymentService,
-    private signatureService: SignatureService,
     private insuranceService: InsuranceService,
     private fileStorageService: FileStorageService,
   ) {}
@@ -328,32 +325,6 @@ export class ContractService {
     }
 
     return await this.contractRepository.save(updatedContract)
-  }
-
-  async signContract(id: string, signContractDto: SignContractDto): Promise<Contract> {
-    const contract = await this.findOne(id)
-
-    if (contract.status !== ContractStatus.AWAITING_CLIENT_CONFIRMATION) {
-      throw new BadRequestException('Contract must be in AWAITING_CLIENT_CONFIRMATION status to be signed')
-    }
-
-    const signatureUrl = await this.signatureService.processSignature(signContractDto.signatureData)
-
-    contract.signatureUrl = signatureUrl
-    contract.signedAt = new Date()
-    contract.status = ContractStatus.ACTIVE
-
-    const contractAttachment = this.attachmentRepository.create({
-      fileName: `Contract_${contract.contractNumber}.pdf`,
-      fileUrl: signContractDto.documentUrl || `contracts/${contract.id}/contract.pdf`,
-      type: AttachmentType.CONTRACT,
-      description: 'Signed contract document',
-      contract,
-    })
-
-    await this.attachmentRepository.save(contractAttachment)
-
-    return await this.contractRepository.save(contract)
   }
 
   async addAttachment(

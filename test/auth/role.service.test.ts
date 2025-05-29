@@ -90,7 +90,7 @@ describe('RoleService', () => {
 
       vi.spyOn(userRepository, 'findOne').mockResolvedValue({
         ...mockUser,
-        roles: [],
+        role: undefined as unknown as Role,
       })
       vi.spyOn(roleService, 'getRoleByType').mockResolvedValue(mockRole)
       vi.spyOn(userRepository, 'save').mockImplementation((entity) => Promise.resolve(entity as User))
@@ -110,7 +110,7 @@ describe('RoleService', () => {
 
       vi.spyOn(userRepository, 'findOne').mockResolvedValue({
         ...mockUser,
-        roles: [mockRole],
+        role: mockRole,
       })
       vi.spyOn(roleService, 'getRoleByType').mockResolvedValue(mockRole)
 
@@ -138,7 +138,7 @@ describe('RoleService', () => {
     it('should remove a role from a user successfully', async () => {
       const mockRole = RoleFactory.create({ name: RoleType.AGENT })
       const mockUser = UserFactory.create({
-        roles: [mockRole],
+        role: mockRole,
       })
 
       vi.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser)
@@ -156,7 +156,7 @@ describe('RoleService', () => {
 
     it('should throw BadRequestException when user does not have the role', async () => {
       const mockUser = UserFactory.create({
-        roles: [],
+        role: undefined,
       })
       const mockRole = RoleFactory.create({ name: RoleType.AGENT })
 

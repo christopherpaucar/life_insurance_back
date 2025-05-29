@@ -4,7 +4,6 @@ import { Contract, ContractStatus } from '../../src/contract/entities/contract.e
 import { Beneficiary } from '../../src/contract/entities/beneficiary.entity'
 import { Attachment, AttachmentType } from '../../src/contract/entities/attachment.entity'
 import { PaymentService } from '../../src/contract/services/payment.service'
-import { SignatureService } from '../../src/contract/services/signature.service'
 import { Repository } from 'typeorm'
 import { CreateContractDto } from '../../src/contract/dto/create-contract.dto'
 import { NotFoundException, BadRequestException } from '@nestjs/common'
@@ -22,7 +21,6 @@ describe('ContractService', () => {
   let attachmentRepository: Repository<Attachment>
   let paymentMethodRepository: Repository<PaymentMethod>
   let paymentService: PaymentService
-  let signatureService: SignatureService
   let insuranceService: InsuranceService
   let fileStorageService: FileStorageService
 
@@ -103,10 +101,6 @@ describe('ContractService', () => {
       deletePaymentsForContract: vi.fn(),
     } as unknown as PaymentService
 
-    signatureService = {
-      processSignature: vi.fn().mockResolvedValue('signature-url'),
-    } as unknown as SignatureService
-
     insuranceService = {
       findOne: vi.fn().mockResolvedValue({
         id: '1',
@@ -127,7 +121,6 @@ describe('ContractService', () => {
       attachmentRepository,
       paymentMethodRepository,
       paymentService,
-      signatureService,
       insuranceService,
       fileStorageService,
     )
@@ -402,67 +395,6 @@ describe('ContractService', () => {
       }
 
       await expect(service.update('999', updateContractDto)).rejects.toThrow(NotFoundException)
-    })
-  })
-
-  describe('signContract', () => {
-    it('should sign a contract', async () => {
-      const awaitingContract = { ...mockContract, status: ContractStatus.AWAITING_CLIENT_CONFIRMATION }
-      vi.spyOn(contractRepository, 'createQueryBuilder').mockReturnValueOnce({
-        leftJoinAndSelect: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        loadRelationIdAndMap: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        getOne: vi.fn().mockResolvedValueOnce(awaitingContract),
-      } as any)
-
-      vi.spyOn(contractRepository, 'save').mockImplementationOnce((contract) => {
-        return Promise.resolve({
-          ...contract,
-          status: ContractStatus.ACTIVE,
-          signatureUrl: 'signature-url',
-          signedAt: new Date(),
-        } as Contract)
-      })
-
-      const signContractDto = {
-        signatureData: 'base64-signature-data',
-        documentUrl: 'contracts/1/contract.pdf',
-      }
-
-      const result = await service.signContract('1', signContractDto)
-
-      expect(result).toBeDefined()
-      expect(result.status).toBe(ContractStatus.ACTIVE)
-      expect(result.signatureUrl).toBeDefined()
-      expect(result.signedAt).toBeDefined()
-      expect(signatureService.processSignature).toHaveBeenCalledWith(signContractDto.signatureData)
-    })
-
-    it('should throw BadRequestException when signing non-awaiting contract', async () => {
-      const signContractDto = {
-        signatureData: 'base64-signature-data',
-        documentUrl: 'contracts/1/contract.pdf',
-      }
-
-      await expect(service.signContract('1', signContractDto)).rejects.toThrow(BadRequestException)
-    })
-
-    it('should throw NotFoundException when signing non-existent contract', async () => {
-      vi.spyOn(contractRepository, 'createQueryBuilder').mockReturnValueOnce({
-        leftJoinAndSelect: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        loadRelationIdAndMap: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        getOne: vi.fn().mockResolvedValueOnce(null),
-      } as any)
-
-      const signContractDto = {
-        signatureData: 'base64-signature-data',
-        documentUrl: 'contracts/1/contract.pdf',
-      }
-
-      await expect(service.signContract('999', signContractDto)).rejects.toThrow(NotFoundException)
     })
   })
 
