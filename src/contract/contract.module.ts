@@ -13,6 +13,9 @@ import { AuthModule } from '../auth/auth.module'
 import { InsuranceModule } from '../insurance/insurance.module'
 import { FileStorageModule } from '../common/file-storage.module'
 import { InsurancePrice } from '../insurance/entities/insurance-price.entity'
+import { PaymentMethodController } from './controllers/payment-method.controller'
+import { PaymentMethodService } from './services/payment-method.service'
+import { FileStorageService } from '../common/services/file-storage.service'
 
 @Module({
   imports: [
@@ -21,8 +24,8 @@ import { InsurancePrice } from '../insurance/entities/insurance-price.entity'
     InsuranceModule,
     FileStorageModule,
   ],
-  controllers: [ContractController, PaymentController],
-  providers: [ContractService, PaymentService],
-  exports: [ContractService, PaymentService],
+  controllers: [ContractController, PaymentController, PaymentMethodController],
+  providers: [ContractService, PaymentService, PaymentMethodService, FileStorageService],
+  exports: [ContractService, PaymentService, PaymentMethodService],
 })
 export class ContractModule {}

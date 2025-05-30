@@ -7,6 +7,6 @@ import { LocalStorageStrategy } from './services/local-storage.strategy'
 @Module({
   imports: [ConfigModule],
   providers: [FileStorageService, S3StorageStrategy, LocalStorageStrategy],
-  exports: [FileStorageService],
+  exports: [FileStorageService, S3StorageStrategy, LocalStorageStrategy],
 })
 export class FileStorageModule {}
