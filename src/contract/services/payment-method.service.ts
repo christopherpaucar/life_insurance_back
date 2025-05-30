@@ -24,6 +24,7 @@ export class PaymentMethodService {
   async findAll(user: User): Promise<PaymentMethod[]> {
     return this.paymentMethodRepository.find({
       where: { user: { id: user.id } },
+      order: { isDefault: 'DESC' },
     })
   }
 

@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator'
+import { IsBoolean, IsEnum, IsNotEmpty, IsString } from 'class-validator'
 import { PaymentMethodType } from '../entities/payment-method.entity'
 
 export class CreatePaymentMethodDto {
@@ -9,4 +9,8 @@ export class CreatePaymentMethodDto {
   @IsString()
   @IsNotEmpty()
   details: string
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isDefault: boolean
 }

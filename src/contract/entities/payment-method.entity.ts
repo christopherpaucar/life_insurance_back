@@ -18,6 +18,9 @@ export class PaymentMethod extends BaseEntity {
   @Column({ default: true })
   isValid: boolean
 
+  @Column({ default: false })
+  isDefault: boolean
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User
