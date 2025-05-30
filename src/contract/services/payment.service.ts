@@ -48,7 +48,7 @@ export class PaymentService {
     const installmentAmount = Math.round((contract.totalAmount / numberOfPayments) * 100) / 100
 
     for (let i = 0; i < numberOfPayments; i++) {
-      let dueDate = new Date(startDate)
+      let dueDate = startDate
 
       if (i > 0) {
         switch (frequency) {
