@@ -234,6 +234,7 @@ export class ContractService {
       .skip(skip)
       .take(limit)
       .orderBy('contract.createdAt', 'DESC')
+      .addOrderBy('transactions.nextPaymentDate', 'ASC')
 
     if (query.status) {
       queryBuilder.andWhere('contract.status = :status', { status: query.status.toLowerCase() })

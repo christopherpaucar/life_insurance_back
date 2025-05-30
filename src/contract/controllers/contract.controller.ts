@@ -58,9 +58,14 @@ export class ContractController {
   @UseInterceptors(FileInterceptor('p12File'))
   async confirmActivation(
     @Param('id') id: string,
-    @Body() activateContractDto: ActivateContractDto,
+    @Body() formData: Partial<ActivateContractDto>,
     @UploadedFile() p12File: Express.Multer.File,
   ) {
+    const activateContractDto = {
+      ...formData,
+      paymentDetails:
+        typeof formData.paymentDetails === 'string' ? JSON.parse(formData.paymentDetails) : formData.paymentDetails,
+    } as ActivateContractDto
     const contract = await this.contractService.confirmActivation(id, activateContractDto, p12File)
     return new ApiResponseDto({ success: true, data: contract })
   }
