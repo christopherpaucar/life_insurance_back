@@ -70,6 +70,7 @@ describe('ContractService', () => {
         skip: vi.fn().mockReturnThis(),
         take: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         loadRelationIdAndMap: vi.fn().mockReturnThis(),
@@ -287,17 +288,20 @@ describe('ContractService', () => {
         deletedAt: null,
       } as unknown as User
 
-      vi.spyOn(contractRepository, 'createQueryBuilder').mockReturnValueOnce({
+      const queryBuilderMock = {
         leftJoinAndSelect: vi.fn().mockReturnThis(),
         skip: vi.fn().mockReturnThis(),
         take: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         loadRelationIdAndMap: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         getManyAndCount: vi.fn().mockResolvedValueOnce([[mockContract], 1]),
-      } as any)
+      } as any
+
+      vi.spyOn(contractRepository, 'createQueryBuilder').mockReturnValue(queryBuilderMock)
 
       const result = await service.findAll({ ...query, pages: '1' }, user)
 
@@ -322,6 +326,21 @@ describe('ContractService', () => {
         deletedAt: null,
       } as unknown as User
 
+      const queryBuilderMock = {
+        leftJoinAndSelect: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        take: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        loadRelationIdAndMap: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        getManyAndCount: vi.fn().mockResolvedValueOnce([[mockContract], 1]),
+      } as any
+
+      vi.spyOn(contractRepository, 'createQueryBuilder').mockReturnValue(queryBuilderMock)
+
       const result = await service.findAll(query, user)
 
       expect(result).toBeDefined()
@@ -341,6 +360,21 @@ describe('ContractService', () => {
         updatedAt: new Date(),
         deletedAt: null,
       } as unknown as User
+
+      const queryBuilderMock = {
+        leftJoinAndSelect: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        take: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        loadRelationIdAndMap: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        getManyAndCount: vi.fn().mockResolvedValueOnce([[mockContract], 1]),
+      } as any
+
+      vi.spyOn(contractRepository, 'createQueryBuilder').mockReturnValue(queryBuilderMock)
 
       const result = await service.findAll(query, user)
 
