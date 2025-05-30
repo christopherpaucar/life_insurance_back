@@ -7,6 +7,8 @@ import { addMonths, addYears } from 'date-fns'
 import { Transaction, TransactionStatus } from '../entities/transaction.entity'
 import { PaymentMethod } from '../entities/payment-method.entity'
 import { DateUtils } from '../../common/utils/date.utils'
+import { User } from '../../auth/entities/user.entity'
+import { RoleType } from '../../auth/entities/role.entity'
 
 @Injectable()
 export class PaymentService {
@@ -213,5 +215,45 @@ export class PaymentService {
     const date = new Date()
     date.setDate(date.getDate() + this.RETRY_INTERVAL_DAYS)
     return date
+  }
+
+  async getPaymentHistory(
+    query: any,
+    user: User,
+  ): Promise<{ transactions: Transaction[]; total: number; page: number; limit: number }> {
+    const page = query.page ? parseInt(query.page as string, 10) : 1
+    const limit = query.limit ? parseInt(query.limit as string, 10) : 10
+    const skip = (page - 1) * limit
+
+    const queryBuilder = this.transactionRepository
+      .createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.contract', 'contract')
+      .leftJoinAndSelect('contract.user', 'user')
+      .orderBy('transaction.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit)
+
+    if (user.role.name === RoleType.CLIENT) {
+      queryBuilder.andWhere('user.id = :userId', { userId: user.id })
+    }
+
+    if (query.status) {
+      queryBuilder.andWhere('transaction.status = :status', { status: query.status })
+    }
+
+    if (query.startDate && query.endDate) {
+      queryBuilder.andWhere('transaction.createdAt BETWEEN :startDate AND :endDate', {
+        startDate: query.startDate,
+        endDate: query.endDate,
+      })
+    }
+
+    if (query.contractId) {
+      queryBuilder.andWhere('contract.id = :contractId', { contractId: query.contractId })
+    }
+
+    const [transactions, total] = await queryBuilder.getManyAndCount()
+
+    return { transactions, total, page, limit }
   }
 }
