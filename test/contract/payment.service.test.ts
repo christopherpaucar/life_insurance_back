@@ -14,7 +14,7 @@ describe('PaymentService', () => {
   let paymentMethodRepository: BaseRepositoryMock<PaymentMethod>
 
   beforeAll(() => {
-    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'))
+    vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'))
   })
 
   beforeEach(() => {
@@ -53,8 +53,8 @@ describe('PaymentService', () => {
     it('should generate monthly payment schedule', async () => {
       const contract = {
         id: '1',
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-12-31'),
+        startDate: new Date('2024-01-01T00:00:00.000Z'),
+        endDate: new Date('2024-12-31T23:59:59.999Z'),
         paymentFrequency: PaymentFrequency.MONTHLY,
         totalAmount: 1200,
       } as Contract
@@ -69,8 +69,8 @@ describe('PaymentService', () => {
     it('should generate quarterly payment schedule', async () => {
       const contract = {
         id: '1',
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-12-31'),
+        startDate: new Date('2024-01-01T00:00:00.000Z'),
+        endDate: new Date('2024-12-31T23:59:59.999Z'),
         paymentFrequency: PaymentFrequency.QUARTERLY,
         totalAmount: 1200,
       } as Contract
@@ -85,8 +85,8 @@ describe('PaymentService', () => {
     it('should generate yearly payment schedule', async () => {
       const contract = {
         id: '1',
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-12-31'),
+        startDate: new Date('2024-01-01T00:00:00.000Z'),
+        endDate: new Date('2024-12-31T23:59:59.999Z'),
         paymentFrequency: PaymentFrequency.YEARLY,
         totalAmount: 1200,
       } as Contract
