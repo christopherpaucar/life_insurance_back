@@ -11,7 +11,6 @@ import { PaymentController } from './controllers/payment.controller'
 import { PaymentService } from './services/payment.service'
 import { AuthModule } from '../auth/auth.module'
 import { InsuranceModule } from '../insurance/insurance.module'
-import { SignatureService } from './services/signature.service'
 import { FileStorageModule } from '../common/file-storage.module'
 import { InsurancePrice } from '../insurance/entities/insurance-price.entity'
 
@@ -23,7 +22,7 @@ import { InsurancePrice } from '../insurance/entities/insurance-price.entity'
     FileStorageModule,
   ],
   controllers: [ContractController, PaymentController],
-  providers: [ContractService, PaymentService, SignatureService],
+  providers: [ContractService, PaymentService],
   exports: [ContractService, PaymentService],
 })
 export class ContractModule {}

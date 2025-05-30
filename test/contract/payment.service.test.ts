@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest'
 import { PaymentService } from '../../src/contract/services/payment.service'
 import { Repository } from 'typeorm'
 import { Contract, ContractStatus } from '../../src/contract/entities/contract.entity'
@@ -12,6 +12,10 @@ describe('PaymentService', () => {
   let contractRepository: BaseRepositoryMock<Contract>
   let transactionRepository: BaseRepositoryMock<Transaction>
   let paymentMethodRepository: BaseRepositoryMock<PaymentMethod>
+
+  beforeAll(() => {
+    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'))
+  })
 
   beforeEach(() => {
     contractRepository = new BaseRepositoryMock<Contract>()
