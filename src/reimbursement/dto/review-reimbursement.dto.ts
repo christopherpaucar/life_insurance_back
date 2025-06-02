@@ -28,10 +28,6 @@ export class ReviewReimbursementDto {
   @IsOptional()
   reviewerNotes?: string
 
-  @IsUUID()
-  @IsNotEmpty()
-  reviewerId: string
-
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })

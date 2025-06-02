@@ -22,9 +22,6 @@ export class CreateReimbursementItemDto {
 
 export class CreateReimbursementDto {
   @IsUUID()
-  clientId: string
-
-  @IsUUID()
   contractId: string
 
   @IsArray()

@@ -888,11 +888,11 @@
 			]
 		},
 		{
-			"name": "User Management",
-			"description": "Endpoints for managing users and roles",
+			"name": "Reimbursement Management",
+			"description": "Endpoints for managing reimbursements",
 			"item": [
 				{
-					"name": "Get All Users",
+					"name": "Create Reimbursement",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -904,22 +904,31 @@
 								}
 							]
 						},
-						"method": "GET",
-						"header": [],
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 1000,\n    \"description\": \"Medical expenses reimbursement\",\n    \"documentUrl\": \"https://example.com/document.pdf\"\n}"
+						},
 						"url": {
-							"raw": "{{baseUrl}}/users",
+							"raw": "{{baseUrl}}/reimbursements",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"users"
+								"reimbursements"
 							]
 						},
-						"description": "Retrieve all users (admin only)"
+						"description": "Create a new reimbursement request"
 					}
 				},
 				{
-					"name": "Get User by ID",
+					"name": "Get All Reimbursements",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -934,27 +943,54 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/users/:id",
+							"raw": "{{baseUrl}}/reimbursements",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"users",
+								"reimbursements"
+							]
+						},
+						"description": "Retrieve all reimbursements"
+					}
+				},
+				{
+					"name": "Get Reimbursement by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/reimbursements/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reimbursements",
 								":id"
 							],
 							"variable": [
 								{
 									"key": "id",
-									"value": "156e0f5e-34e5-4c0b-9315-fc4159445d00",
-									"description": "User ID"
+									"value": "",
+									"description": "Reimbursement ID"
 								}
 							]
 						},
-						"description": "Retrieve a specific user by ID"
+						"description": "Retrieve a specific reimbursement by ID"
 					}
 				},
 				{
-					"name": "Update User",
+					"name": "Update Reimbursement",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -975,30 +1011,30 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"agente@agente.com\"\n}"
+							"raw": "{\n    \"amount\": 1200,\n    \"description\": \"Updated medical expenses reimbursement\",\n    \"documentUrl\": \"https://example.com/updated-document.pdf\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/users/:id",
+							"raw": "{{baseUrl}}/reimbursements/:id",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"users",
+								"reimbursements",
 								":id"
 							],
 							"variable": [
 								{
 									"key": "id",
-									"value": "156e0f5e-34e5-4c0b-9315-fc4159445d00",
-									"description": "User ID"
+									"value": "",
+									"description": "Reimbursement ID"
 								}
 							]
 						},
-						"description": "Update user information"
+						"description": "Update an existing reimbursement"
 					}
 				},
 				{
-					"name": "Update User Role",
+					"name": "Review Reimbursement",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -1019,27 +1055,62 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"role\": \"AGENTE\"\n}"
+							"raw": "{\n    \"status\": \"approved\",\n    \"reviewNotes\": \"Documents verified and approved\",\n    \"approvedAmount\": 1000\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/users/:id/role",
+							"raw": "{{baseUrl}}/reimbursements/:id/review",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"users",
+								"reimbursements",
 								":id",
-								"role"
+								"review"
 							],
 							"variable": [
 								{
 									"key": "id",
-									"value": "156e0f5e-34e5-4c0b-9315-fc4159445d00",
-									"description": "User ID"
+									"value": "",
+									"description": "Reimbursement ID"
 								}
 							]
 						},
-						"description": "Update user role (admin only)"
+						"description": "Review a reimbursement request"
+					}
+				},
+				{
+					"name": "Delete Reimbursement",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/reimbursements/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reimbursements",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "Reimbursement ID"
+								}
+							]
+						},
+						"description": "Delete a reimbursement request"
 					}
 				}
 			]
@@ -1734,6 +1805,144 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "Reimbursement Flow",
+					"description": "Complete workflow for reimbursement request and review process",
+					"item": [
+						{
+							"name": "1. Client: Create Reimbursement Request",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{clientToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"amount\": 1000,\n    \"description\": \"Medical expenses reimbursement\",\n    \"documentUrl\": \"https://example.com/document.pdf\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/reimbursements",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"reimbursements"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"if (jsonData.data && jsonData.data.id) {",
+											"    pm.collectionVariables.set(\"reimbursementId\", jsonData.data.id);",
+											"}",
+											"pm.test(\"Reimbursement created successfully\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "2. Reviewer: Review Reimbursement",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{reviewerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"approved\",\n    \"reviewNotes\": \"Documents verified and approved\",\n    \"approvedAmount\": 1000\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/review",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"reimbursements",
+										"{{reimbursementId}}",
+										"review"
+									]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();",
+											"pm.test(\"Reimbursement reviewed successfully\", function () {",
+											"    pm.response.to.have.status(200);",
+											"    pm.expect(jsonData.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							]
+						},
+						{
+							"name": "3. Client: Check Reimbursement Status",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{clientToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"reimbursements",
+										"{{reimbursementId}}"
+									]
+								}
+							}
+						}
+					]
 				}
 			]
 		}
@@ -1806,6 +2015,11 @@
 			"key": "clientToken",
 			"value": "",
 			"description": "Token for client user"
+		},
+		{
+			"key": "reviewerToken",
+			"value": "",
+			"description": "Token for reviewer user"
 		}
 	]
 }
