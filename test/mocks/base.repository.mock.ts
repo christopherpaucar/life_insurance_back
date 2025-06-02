@@ -9,7 +9,7 @@ interface EntityWithInsurance extends EntityWithId {
   insurance?: { id: string }
 }
 
-class QueryBuilderMock {
+export class QueryBuilderMock {
   private joins: string[] = []
   private whereClause: string | null = null
   private whereParams: any = {}
@@ -24,9 +24,25 @@ class QueryBuilderMock {
     return this
   }
 
+  leftJoin(relation: string, alias: string) {
+    this.joins.push(`${relation} as ${alias}`)
+    return this
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  select(columns: string[]) {
+    return this
+  }
+
   where(condition: string, params?: any) {
     this.whereClause = condition
     this.whereParams = params || {}
+    return this
+  }
+
+  andWhere(condition: string, params?: any) {
+    this.whereClause = this.whereClause ? `${this.whereClause} AND ${condition}` : condition
+    this.whereParams = { ...this.whereParams, ...params }
     return this
   }
 
@@ -90,6 +106,22 @@ export class BaseRepositoryMock<T extends EntityWithId> {
   }
 
   save(entity: any): Promise<Partial<T>> {
+    if (Array.isArray(entity)) {
+      const savedEntities = entity.map((e) => {
+        if (e.id) {
+          const index = this.items.findIndex((item) => item.id === e.id)
+          if (index !== -1) {
+            this.items[index] = { ...this.items[index], ...e }
+            return this.items[index]
+          }
+        }
+        const newEntity = this.create(e)
+        this.items.push(newEntity)
+        return newEntity
+      })
+      return Promise.resolve(savedEntities[0])
+    }
+
     if (entity.id) {
       const index = this.items.findIndex((item) => item.id === entity.id)
       if (index !== -1) {
@@ -138,6 +170,18 @@ export class BaseRepositoryMock<T extends EntityWithId> {
     const index = this.items.findIndex((item) => (item as EntityWithInsurance).insurance?.id === insurance.id)
     if (index !== -1) {
       this.items.splice(index, 1)
+    }
+    await Promise.resolve()
+  }
+
+  async update(id: string, partialEntity: Partial<T>): Promise<void> {
+    const index = this.items.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      this.items[index] = {
+        ...this.items[index],
+        ...partialEntity,
+        updatedAt: new Date(),
+      }
     }
     await Promise.resolve()
   }
