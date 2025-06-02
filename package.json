@@ -20,7 +20,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/config/typeorm.config.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/config/typeorm.config.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/config/typeorm.config.ts",
-    "sonar:analyze": "npm run test:cov && sonar-scanner -Dsonar.projectKey=life-insurance-back -Dsonar.sources=src -Dsonar.host.url=http://localhost:9000 -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.token=${SONAR_TOKEN}"
+    "sonar:analyze": "npm run test:cov && sonar-scanner -Dsonar.projectKey=life-insurance-back -Dsonar.sources=src -Dsonar.host.url=http://localhost:9000 -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.token=${SONAR_TOKEN} -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/test/**/*,**/coverage/**/*,**/node_modules/**/*,**/dist/**/*,**/*.controller.ts,**/*.dto.ts,**/*.strategy.ts,**/src/common/**/*,**/src/migrations/**/* -Dsonar.test.exclusions=**/*.spec.ts,**/*.test.ts,**/test/**/*"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.799.0",
