@@ -56,4 +56,11 @@ export class User extends BaseEntity implements IUser {
 
   @Column({ type: 'jsonb', nullable: true })
   lifestyle: Record<string, any>
+
+  static async hashPassword(password: string) {
+    const bcrypt = await import('bcrypt')
+
+    const saltRounds = 10
+    return bcrypt.hash(password, saltRounds)
+  }
 }

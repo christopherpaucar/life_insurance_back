@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common'
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Observable } from 'rxjs'
 import { User } from '../entities/user.entity'
@@ -29,7 +29,7 @@ export class RolesGuard implements CanActivate {
     const hasRole = requiredRoles.some((role) => role.toLowerCase() === user.role.name.toLowerCase())
 
     if (!hasRole) {
-      throw new UnauthorizedException('User does not have required role')
+      throw new ForbiddenException('You are not authorized to access this resource')
     }
 
     return true

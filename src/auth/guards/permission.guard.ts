@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common'
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { RoleService } from '../services/role.service'
 import { PERMISSION_KEY } from '../decorators/require-permission.decorator'
@@ -25,7 +25,7 @@ export class PermissionGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest()
 
     if (!user || !user.role) {
-      return false
+      throw new UnauthorizedException('User not authenticated or missing role')
     }
 
     if (user.role.name === RoleType.SUPER_ADMIN) {

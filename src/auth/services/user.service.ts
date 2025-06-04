@@ -41,6 +41,11 @@ export class UserService {
 
     delete updateUserDto.role
 
+    if (updateUserDto.password) {
+      const hashedPassword = await User.hashPassword(updateUserDto.password)
+      updateUserDto.password = hashedPassword
+    }
+
     Object.assign(user, updateUserDto)
     return this.userRepository.save(user)
   }
