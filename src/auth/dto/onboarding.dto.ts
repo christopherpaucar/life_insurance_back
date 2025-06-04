@@ -53,3 +53,61 @@ export class OnboardingDto {
   @IsOptional()
   lifestyle?: Record<string, any>
 }
+
+export class UpdateOnboardingDto {
+  @IsOptional()
+  @IsString()
+  address?: string
+
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string
+
+  @IsOptional()
+  @IsString()
+  emergencyContact?: string
+
+  @IsOptional()
+  @IsString()
+  emergencyPhone?: string
+
+  @IsOptional()
+  @IsObject()
+  medicalHistory?: Record<string, any>
+
+  @IsOptional()
+  @IsObject()
+  lifestyle?: Record<string, any>
+
+  @IsOptional()
+  @IsString()
+  gender?: string
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(300)
+  height?: number
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(500)
+  weight?: number
+
+  @IsOptional()
+  @IsEnum(BloodType)
+  bloodType?: BloodType
+
+  @IsOptional()
+  @IsString()
+  birthDate?: string
+
+  @IsOptional()
+  @IsString()
+  name?: string
+
+  @IsOptional()
+  @IsString()
+  email?: string
+}

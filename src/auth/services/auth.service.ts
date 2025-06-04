@@ -9,7 +9,7 @@ import { IAuthResponse } from '../../common/interfaces/auth.interface'
 import { RoleType } from '../entities/role.entity'
 import { Role } from '../entities/role.entity'
 import { LoginDto, RegisterDto } from '../dto/auth.dto'
-import { OnboardingDto } from '../dto/onboarding.dto'
+import { OnboardingDto, UpdateOnboardingDto } from '../dto/onboarding.dto'
 
 @Injectable()
 export class AuthService {
@@ -95,16 +95,20 @@ export class AuthService {
     })
   }
 
-  async onboarding(user: User, dto: OnboardingDto): Promise<User> {
+  async onboarding(
+    user: User,
+    dto: OnboardingDto | UpdateOnboardingDto,
+    isUpdate: boolean = false,
+  ): Promise<Partial<User>> {
     if (user.role.name !== RoleType.CLIENT) {
       throw new ForbiddenException('Only clients can complete onboarding')
     }
 
-    if (user.onboardingCompleted) {
+    if (user.onboardingCompleted && !isUpdate) {
       throw new ForbiddenException('Onboarding already completed')
     }
 
-    const updatedUser = await this.userRepository.save({
+    const { password: _, ...updatedUser } = await this.userRepository.save({
       ...user,
       ...dto,
       onboardingCompleted: true,

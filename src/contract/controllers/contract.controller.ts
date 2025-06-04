@@ -15,7 +15,6 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { ContractService } from '../services/contract.service'
 import { CreateContractDto } from '../dto/create-contract.dto'
 import { UpdateContractDto } from '../dto/update-contract.dto'
-import { ActivateContractDto } from '../dto/activate-contract.dto'
 import { ApiResponseDto } from '../../common/dto/api-response.dto'
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
 import { PermissionGuard } from '../../auth/guards/permission.guard'
@@ -58,15 +57,10 @@ export class ContractController {
   @UseInterceptors(FileInterceptor('p12File'))
   async confirmActivation(
     @Param('id') id: string,
-    @Body() formData: Partial<ActivateContractDto>,
+    @Query('paymentMethodId') paymentMethodId: string,
     @UploadedFile() p12File: Express.Multer.File,
   ) {
-    const activateContractDto = {
-      ...formData,
-      paymentDetails:
-        typeof formData.paymentDetails === 'string' ? JSON.parse(formData.paymentDetails) : formData.paymentDetails,
-    } as ActivateContractDto
-    const contract = await this.contractService.confirmActivation(id, activateContractDto, p12File)
+    const contract = await this.contractService.confirmActivation(id, paymentMethodId, p12File)
     return new ApiResponseDto({ success: true, data: contract })
   }
 

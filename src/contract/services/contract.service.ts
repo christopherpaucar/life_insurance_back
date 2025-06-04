@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Not, Repository } from 'typeorm'
 import { Contract, ContractStatus } from '../entities/contract.entity'
 import { Beneficiary, RelationshipType } from '../entities/beneficiary.entity'
 import { Attachment, AttachmentType } from '../entities/attachment.entity'
@@ -12,7 +12,6 @@ import { User } from '../../auth/entities/user.entity'
 import { RoleType } from '../../auth/entities/role.entity'
 import { InsuranceService } from '../../insurance/services/insurance.service'
 import { PaymentFrequency } from '../../insurance/entities/insurance-price.entity'
-import { ActivateContractDto } from '../dto/activate-contract.dto'
 import { InsuranceCoverageRelation } from '../../insurance/entities/insurance-coverage-relation.entity'
 import { InsuranceBenefitRelation } from '../../insurance/entities/insurance-benefit-relation.entity'
 import { DateUtils } from '../../common/utils/date.utils'
@@ -124,11 +123,7 @@ export class ContractService {
     return this.findOne(updatedContract.id)
   }
 
-  async confirmActivation(
-    id: string,
-    activateContractDto: ActivateContractDto,
-    p12File: Express.Multer.File,
-  ): Promise<Contract> {
+  async confirmActivation(id: string, paymentMethodId: string, p12File: Express.Multer.File): Promise<Contract> {
     const contract = await this.findOne(id)
 
     if (contract.status !== ContractStatus.AWAITING_CLIENT_CONFIRMATION) {
@@ -147,18 +142,25 @@ export class ContractService {
         entityId: id,
         entityType: 'contract',
         documentType: AttachmentType.P12,
-        ownerId: contract.user.id,
+        ownerId: contract.user as unknown as string,
         ownerType: 'user',
       },
     )
 
-    const paymentMethod = this.paymentMethodRepository.create({
-      type: activateContractDto.paymentMethodType,
-      details: JSON.stringify(activateContractDto.paymentDetails),
-      user: contract.user,
+    const paymentMethod = await this.paymentMethodRepository.findOne({
+      where: { id: paymentMethodId },
     })
 
-    await this.paymentMethodRepository.save(paymentMethod)
+    if (!paymentMethod) {
+      throw new NotFoundException('Payment method not found')
+    }
+
+    await this.paymentMethodRepository.update(
+      { id: Not(paymentMethodId), user: { id: contract.user as unknown as string } },
+      { isDefault: false },
+    )
+    await this.paymentMethodRepository.update({ id: paymentMethodId }, { isDefault: true })
+    await this.contractRepository.update({ id }, { paymentMethod: { id: paymentMethodId } })
 
     contract.paymentMethod = paymentMethod
     contract.status = ContractStatus.ACTIVE
@@ -230,7 +232,16 @@ export class ContractService {
       .leftJoinAndSelect('contract.attachments', 'attachments')
       .loadRelationIdAndMap('contract.user', 'contract.user')
       .leftJoinAndSelect('contract.insurance', 'insurance')
-      .select(['contract', 'beneficiaries', 'transactions', 'attachments', 'insurance.id', 'insurance.name'])
+      .leftJoinAndSelect('contract.paymentMethod', 'paymentMethod')
+      .select([
+        'contract',
+        'beneficiaries',
+        'transactions',
+        'attachments',
+        'insurance.id',
+        'insurance.name',
+        'paymentMethod',
+      ])
       .skip(skip)
       .take(limit)
       .orderBy('contract.createdAt', 'DESC')
@@ -261,7 +272,16 @@ export class ContractService {
       .leftJoinAndSelect('contract.attachments', 'attachments')
       .loadRelationIdAndMap('contract.user', 'contract.user')
       .leftJoinAndSelect('contract.insurance', 'insurance')
-      .select(['contract', 'beneficiaries', 'transactions', 'attachments', 'insurance.id', 'insurance.name'])
+      .leftJoinAndSelect('contract.paymentMethod', 'paymentMethod')
+      .select([
+        'contract',
+        'beneficiaries',
+        'transactions',
+        'attachments',
+        'insurance.id',
+        'insurance.name',
+        'paymentMethod',
+      ])
       .where('contract.id = :id', { id })
       .getOne()
 
