@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, LessThan, Between } from 'typeorm'
+import { Repository, LessThan } from 'typeorm'
 import { Contract, ContractStatus } from '../entities/contract.entity'
 import { PaymentFrequency } from '../../insurance/entities/insurance-price.entity'
 import { addMonths, addYears } from 'date-fns'
@@ -134,23 +134,29 @@ export class PaymentService {
     }
   }
 
-  async processDunning() {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayEnd = new Date()
-    todayEnd.setHours(23, 59, 59, 999)
+  async processDunning(date: string) {
+    const startDate = new Date(date)
+    startDate.setUTCHours(0, 0, 0, 0)
 
-    const pendingTransactions = await this.transactionRepository.find({
-      where: [
-        { status: TransactionStatus.PENDING, nextPaymentDate: Between(today, todayEnd) },
+    const endDate = new Date(date)
+    endDate.setUTCHours(23, 59, 59, 999)
+
+    const queryBuilder = this.transactionRepository
+      .createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.contract', 'contract')
+      .leftJoinAndSelect('contract.paymentMethod', 'paymentMethod')
+      .where(
+        '(transaction.status = :pendingStatus AND DATE(transaction.nextPaymentDate) = DATE(:startDate)) OR ' +
+          '(transaction.status = :failedStatus AND transaction.retryCount < :maxRetryCount AND DATE(transaction.nextRetryPaymentDate) = DATE(:startDate))',
         {
-          status: TransactionStatus.FAILED,
-          retryCount: LessThan(this.MAX_RETRY_COUNT),
-          nextRetryPaymentDate: Between(today, todayEnd),
+          pendingStatus: TransactionStatus.PENDING,
+          failedStatus: TransactionStatus.FAILED,
+          maxRetryCount: this.MAX_RETRY_COUNT,
+          startDate: startDate.toISOString(),
         },
-      ],
-      relations: ['contract', 'contract.paymentMethod'],
-    })
+      )
+
+    const pendingTransactions = await queryBuilder.getMany()
 
     const summary = {
       total: pendingTransactions.length,
@@ -199,12 +205,16 @@ export class PaymentService {
     }
   }
 
-  async downgradeContracts() {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+  async downgradeContracts(date: string) {
+    const today = new Date(date)
+    today.setUTCHours(23, 59, 59, 999)
 
     const contractsWithFailedPayments = await this.transactionRepository.find({
-      where: { retryCount: this.MAX_RETRY_COUNT, contract: { endDate: LessThan(today) } },
+      where: {
+        retryCount: this.MAX_RETRY_COUNT,
+        contract: { retireDate: LessThan(today) },
+        status: TransactionStatus.FAILED,
+      },
       relations: ['contract'],
     })
 
@@ -241,6 +251,11 @@ export class PaymentService {
       transaction.nextRetryPaymentDate = this.calculateNextRetryDate()
     }
 
+    if (transaction.retryCount === 1) {
+      transaction.contract.retireDate = this.calculateRetireDate(transaction.retryCount)
+      await this.contractRepository.save(transaction.contract)
+    }
+
     await this.transactionRepository.save(transaction)
   }
 
@@ -249,19 +264,9 @@ export class PaymentService {
     await this.contractRepository.save(contract)
   }
 
-  private calculateNextPaymentDate(contract: Contract): Date {
+  private calculateRetireDate(retryCount: number): Date {
     const date = new Date()
-    switch (contract.paymentFrequency) {
-      case PaymentFrequency.MONTHLY:
-        date.setMonth(date.getMonth() + 1)
-        break
-      case PaymentFrequency.QUARTERLY:
-        date.setMonth(date.getMonth() + 3)
-        break
-      case PaymentFrequency.YEARLY:
-        date.setFullYear(date.getFullYear() + 1)
-        break
-    }
+    date.setDate(date.getDate() + retryCount * this.RETRY_INTERVAL_DAYS)
     return date
   }
 

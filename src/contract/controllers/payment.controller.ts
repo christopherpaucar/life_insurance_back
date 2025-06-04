@@ -26,8 +26,8 @@ export class PaymentController {
   }
 
   @Post('dunning/process')
-  async processDunning() {
-    const result = await this.paymentService.processDunning()
+  async processDunning(@Query('date') date: string) {
+    const result = await this.paymentService.processDunning(date)
 
     return new ApiResponseDto({
       success: true,
@@ -36,8 +36,8 @@ export class PaymentController {
   }
 
   @Post('downgrade')
-  async downgradeContracts() {
-    const result = await this.paymentService.downgradeContracts()
+  async downgradeContracts(@Query('date') date: string) {
+    const result = await this.paymentService.downgradeContracts(date)
 
     return new ApiResponseDto({
       success: true,
