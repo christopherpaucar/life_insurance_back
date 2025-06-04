@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+} from '@nestjs/common'
 import { ReimbursementService } from '../services/reimbursement.service'
 import { CreateReimbursementDto } from '../dto/create-reimbursement.dto'
 import { UpdateReimbursementDto } from '../dto/update-reimbursement.dto'
@@ -10,16 +22,60 @@ import { User } from '../../auth/entities/user.entity'
 import { RolesGuard } from '../../auth/guards/roles.guard'
 import { Roles } from '../../auth/decorators/roles.decorator'
 import { RoleType } from '../../auth/entities/role.entity'
+import { FilesInterceptor } from '@nestjs/platform-express'
+import { FileStorageService } from '../../common/services/file-storage.service'
 
 @Controller('reimbursements')
 export class ReimbursementController {
-  constructor(private readonly reimbursementService: ReimbursementService) {}
+  constructor(
+    private readonly reimbursementService: ReimbursementService,
+    private readonly fileStorageService: FileStorageService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleType.CLIENT)
-  async create(@Body() data: CreateReimbursementDto, @CurrentUser() user: User): Promise<ApiResponseDto> {
+  @UseInterceptors(FilesInterceptor('invoices'))
+  async create(
+    @Body() formData: any,
+    @UploadedFiles() invoices: Express.Multer.File[],
+    @CurrentUser() user: User,
+  ): Promise<ApiResponseDto> {
+    const data: CreateReimbursementDto = {
+      contractId: formData.contractId,
+      items: JSON.parse(formData.items),
+    }
+
     const reimbursement = await this.reimbursementService.create(data, user)
+
+    if (invoices && invoices.length > 0) {
+      for (let i = 0; i < invoices.length; i++) {
+        const invoice = invoices[i]
+        const item = reimbursement.items[i]
+
+        if (item && invoice.buffer) {
+          const uploadResult = await this.fileStorageService.uploadEntityFile(
+            invoice.buffer,
+            'reimbursement',
+            reimbursement.id,
+            'invoice',
+            {
+              originalName: invoice.originalname,
+              contentType: invoice.mimetype,
+              ownerId: user.id,
+              ownerType: 'user',
+              customMetadata: {
+                itemId: item.id,
+                itemType: item.type,
+              },
+            },
+          )
+
+          await this.reimbursementService.updateItemDocument(item.id, uploadResult.url)
+        }
+      }
+    }
+
     return new ApiResponseDto({ success: true, data: reimbursement })
   }
 

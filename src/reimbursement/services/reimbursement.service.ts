@@ -206,4 +206,8 @@ export class ReimbursementService {
   async remove(id: string): Promise<void> {
     await this.reimbursementRepository.softDelete(id)
   }
+
+  async updateItemDocument(itemId: string, documentUrl: string): Promise<void> {
+    await this.reimbursementItemRepository.update(itemId, { documentUrl })
+  }
 }
