@@ -47,6 +47,9 @@ export class Contract extends BaseEntity {
   @Column({ nullable: true })
   notes: string
 
+  @Column({ nullable: true })
+  retireDate: Date
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User

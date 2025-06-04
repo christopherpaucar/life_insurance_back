@@ -27,7 +27,21 @@ export class PaymentController {
 
   @Post('dunning/process')
   async processDunning() {
-    await this.paymentService.processDunning()
-    return { message: 'Dunning process completed' }
+    const result = await this.paymentService.processDunning()
+
+    return new ApiResponseDto({
+      success: true,
+      data: result,
+    })
+  }
+
+  @Post('downgrade')
+  async downgradeContracts() {
+    const result = await this.paymentService.downgradeContracts()
+
+    return new ApiResponseDto({
+      success: true,
+      data: result,
+    })
   }
 }

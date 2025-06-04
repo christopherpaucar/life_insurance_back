@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, LessThan, LessThanOrEqual } from 'typeorm'
+import { Repository, LessThan, Between } from 'typeorm'
 import { Contract, ContractStatus } from '../entities/contract.entity'
 import { PaymentFrequency } from '../../insurance/entities/insurance-price.entity'
 import { addMonths, addYears } from 'date-fns'
@@ -135,17 +135,44 @@ export class PaymentService {
   }
 
   async processDunning() {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayEnd = new Date()
+    todayEnd.setHours(23, 59, 59, 999)
+
     const pendingTransactions = await this.transactionRepository.find({
       where: [
-        { status: TransactionStatus.PENDING },
-        { status: TransactionStatus.FAILED, retryCount: LessThanOrEqual(this.MAX_RETRY_COUNT) },
+        { status: TransactionStatus.PENDING, nextPaymentDate: Between(today, todayEnd) },
+        {
+          status: TransactionStatus.FAILED,
+          retryCount: LessThan(this.MAX_RETRY_COUNT),
+          nextRetryPaymentDate: Between(today, todayEnd),
+        },
       ],
       relations: ['contract', 'contract.paymentMethod'],
     })
 
+    const summary = {
+      total: pendingTransactions.length,
+      processed: 0,
+      failed: 0,
+      success: 0,
+      pending: pendingTransactions.length,
+    }
+
     for (const transaction of pendingTransactions) {
       await this.processTransaction(transaction)
+      summary.processed++
+      summary.pending--
+
+      if (transaction.status === TransactionStatus.SUCCESS) {
+        summary.success++
+      } else {
+        summary.failed++
+      }
     }
+
+    return summary
   }
 
   private async processTransaction(transaction: Transaction) {
@@ -157,8 +184,14 @@ export class PaymentService {
       return
     }
 
+    const randomDecline = Math.random() < 0.5
+
+    if (randomDecline) {
+      await this.handleFailedPayment(transaction)
+      return
+    }
+
     try {
-      await this.processPayment(transaction)
       await this.handleSuccessfulPayment(transaction)
     } catch (error) {
       console.error('Error processing transaction:', error)
@@ -166,13 +199,35 @@ export class PaymentService {
     }
   }
 
-  private async processPayment(transaction: Transaction) {
-    return Promise.resolve()
+  async downgradeContracts() {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const contractsWithFailedPayments = await this.transactionRepository.find({
+      where: { retryCount: this.MAX_RETRY_COUNT, contract: { endDate: LessThan(today) } },
+      relations: ['contract'],
+    })
+
+    const downgradedContracts: { contractNumber: string; totalAmount: number; downgradedAt: Date }[] = []
+
+    for (const transaction of contractsWithFailedPayments) {
+      transaction.contract.status = ContractStatus.INACTIVE
+      await this.contractRepository.save(transaction.contract)
+      downgradedContracts.push({
+        contractNumber: transaction.contract.contractNumber,
+        totalAmount: transaction.contract.totalAmount,
+        downgradedAt: new Date(),
+      })
+    }
+
+    return {
+      totalDowngraded: downgradedContracts.length,
+      contracts: downgradedContracts,
+    }
   }
 
   private async handleSuccessfulPayment(transaction: Transaction) {
     transaction.status = TransactionStatus.SUCCESS
-    transaction.nextPaymentDate = this.calculateNextPaymentDate(transaction.contract)
     await this.transactionRepository.save(transaction)
   }
 
@@ -184,7 +239,6 @@ export class PaymentService {
       await this.deactivateContract(transaction.contract)
     } else {
       transaction.nextRetryPaymentDate = this.calculateNextRetryDate()
-      transaction.status = TransactionStatus.IN_RETRY
     }
 
     await this.transactionRepository.save(transaction)
