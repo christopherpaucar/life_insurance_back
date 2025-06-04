@@ -22,11 +22,9 @@ export class ReimbursementService {
 
   async create(data: CreateReimbursementDto, user: User): Promise<Reimbursement> {
     const requestNumber = `RMB-${Date.now().toString().slice(-8)}`
-
     const contract = await this.contractService.findOne(data.contractId)
 
     const reimbursement = this.reimbursementRepository.create({
-      ...data,
       requestNumber,
       status: ReimbursementStatus.SUBMITTED,
       totalRequestedAmount: data.items.reduce((sum, item) => sum + Number(item.requestedAmount), 0),

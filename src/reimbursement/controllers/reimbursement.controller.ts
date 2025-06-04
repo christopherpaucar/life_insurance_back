@@ -43,7 +43,7 @@ export class ReimbursementController {
   ): Promise<ApiResponseDto> {
     const data: CreateReimbursementDto = {
       contractId: formData.contractId,
-      items: JSON.parse(formData.items),
+      items: JSON.parse(formData.items as string),
     }
 
     const reimbursement = await this.reimbursementService.create(data, user)
