@@ -243,17 +243,32 @@ export class InsuranceService {
       throw new NotFoundException('One or more coverages not found')
     }
 
-    const coverageRelations = coveragesToUpdate.map((coverageDto) => {
-      const coverage = coverages.find((c) => c.id === coverageDto.id)
-      return manager.create(InsuranceCoverageRelation, {
-        insurance,
-        coverage,
-        coverageAmount: coverageDto.coverageAmount ?? 0,
-        additionalCost: coverageDto.additionalCost ?? 0,
-      })
+    const existingRelations = await manager.find(InsuranceCoverageRelation, {
+      relations: ['coverage'],
+      where: {
+        insurance: { id: insurance.id },
+        coverage: { id: In(coveragesToUpdate.map((coverage) => coverage.id)) },
+      },
     })
 
-    await manager.save(coverageRelations)
+    for (const coverageDto of coveragesToUpdate) {
+      const coverage = coverages.find((c) => c.id === coverageDto.id)
+      const existingRelation = existingRelations.find((r) => r.coverage?.id === coverageDto.id)
+
+      if (existingRelation) {
+        existingRelation.coverageAmount = coverageDto.coverageAmount ?? existingRelation.coverageAmount
+        existingRelation.additionalCost = coverageDto.additionalCost ?? existingRelation.additionalCost
+        await manager.save(existingRelation)
+      } else {
+        const newRelation = manager.create(InsuranceCoverageRelation, {
+          insurance,
+          coverage,
+          coverageAmount: coverageDto.coverageAmount ?? 0,
+          additionalCost: coverageDto.additionalCost ?? 0,
+        })
+        await manager.save(newRelation)
+      }
+    }
   }
 
   private async updateBenefits(manager: any, id: string, insurance: Insurance, benefitsDto?: any[]): Promise<void> {
@@ -287,16 +302,30 @@ export class InsuranceService {
       throw new NotFoundException('One or more benefits not found')
     }
 
-    const benefitRelations = benefitsToUpdate.map((benefitDto) => {
-      const benefit = benefits.find((b) => b.id === benefitDto.id)
-      return manager.create(InsuranceBenefitRelation, {
-        insurance,
-        benefit,
-        additionalCost: benefitDto.additionalCost ?? 0,
-      })
+    const existingRelations = await manager.find(InsuranceBenefitRelation, {
+      relations: ['benefit'],
+      where: {
+        insurance: { id: insurance.id },
+        benefit: { id: In(benefitsToUpdate.map((benefit) => benefit.id)) },
+      },
     })
 
-    await manager.save(benefitRelations)
+    for (const benefitDto of benefitsToUpdate) {
+      const benefit = benefits.find((b) => b.id === benefitDto.id)
+      const existingRelation = existingRelations.find((r) => r.benefit?.id === benefitDto.id)
+
+      if (existingRelation) {
+        existingRelation.additionalCost = benefitDto.additionalCost ?? existingRelation.additionalCost
+        await manager.save(existingRelation)
+      } else {
+        const newRelation = manager.create(InsuranceBenefitRelation, {
+          insurance,
+          benefit,
+          additionalCost: benefitDto.additionalCost ?? 0,
+        })
+        await manager.save(newRelation)
+      }
+    }
   }
 
   async remove(id: string): Promise<void> {
