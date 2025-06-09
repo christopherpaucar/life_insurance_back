@@ -167,7 +167,7 @@ export class InsuranceService {
     } = updateInsuranceDto
 
     return await this.insuranceRepository.manager.transaction(async (manager) => {
-      const insurance = await this.findOne(id)
+      const insurance = await this.findOne(id, manager)
       const updatedInsurance = Object.assign(insurance, insuranceData)
       await manager.save(updatedInsurance)
 
@@ -175,7 +175,7 @@ export class InsuranceService {
       await this.updateCoverages(manager, id, updatedInsurance, coveragesDto)
       await this.updateBenefits(manager, id, updatedInsurance, benefitsDto)
 
-      return this.findOne(id)
+      return this.findOne(id, manager)
     })
   }
 
