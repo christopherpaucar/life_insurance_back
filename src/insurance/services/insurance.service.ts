@@ -40,14 +40,14 @@ export class InsuranceService {
     } = createInsuranceDto
 
     return await this.insuranceRepository.manager.transaction(async (manager) => {
-      const insurance = this.insuranceRepository.create(insuranceData)
+      const insurance = manager.create(Insurance, insuranceData)
       const savedInsurance = await manager.save(insurance)
 
       await this.createPrices(manager, savedInsurance, basePrice, availablePaymentFrequencies)
       await this.createCoverages(manager, savedInsurance, coveragesDto)
       await this.createBenefits(manager, savedInsurance, benefitsDto)
 
-      return this.findOne(savedInsurance.id)
+      return this.findOne(savedInsurance.id, manager)
     })
   }
 
@@ -139,9 +139,9 @@ export class InsuranceService {
     }
   }
 
-  async findOne(id: string): Promise<Insurance> {
-    const insurance = await this.insuranceRepository
-      .createQueryBuilder('insurance')
+  async findOne(id: string, manager?: any): Promise<Insurance> {
+    const insurance = await (manager ?? this.insuranceRepository)
+      .createQueryBuilder(Insurance, 'insurance')
       .leftJoinAndSelect('insurance.coverages', 'coverages')
       .leftJoinAndSelect('coverages.coverage', 'coverage')
       .leftJoinAndSelect('insurance.benefits', 'benefits')
