@@ -140,8 +140,10 @@ export class InsuranceService {
   }
 
   async findOne(id: string, manager?: any): Promise<Insurance> {
-    const insurance = await (manager ?? this.insuranceRepository)
-      .createQueryBuilder(Insurance, 'insurance')
+    const queryBuilder = await (manager?.createQueryBuilder(Insurance, 'insurance') ??
+      this.insuranceRepository.createQueryBuilder('insurance'))
+
+    const insurance = await queryBuilder
       .leftJoinAndSelect('insurance.coverages', 'coverages')
       .leftJoinAndSelect('coverages.coverage', 'coverage')
       .leftJoinAndSelect('insurance.benefits', 'benefits')
