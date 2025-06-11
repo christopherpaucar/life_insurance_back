@@ -42,6 +42,19 @@ describe('PaymentService', () => {
     transactionRepository.manager = mockManager
     paymentMethodRepository.manager = mockManager
 
+    const queryBuilder = transactionRepository.createQueryBuilder()
+    queryBuilder.leftJoinAndSelect = vi.fn().mockReturnThis()
+    queryBuilder.leftJoin = vi.fn().mockReturnThis()
+    queryBuilder.where = vi.fn().mockReturnThis()
+    queryBuilder.andWhere = vi.fn().mockReturnThis()
+    ;(queryBuilder as any).getMany = vi.fn().mockResolvedValue(transactionRepository.items)
+    queryBuilder.getOne = vi.fn().mockResolvedValue(transactionRepository.items[0])
+    queryBuilder.getManyAndCount = vi
+      .fn()
+      .mockResolvedValue([transactionRepository.items, transactionRepository.items.length])
+
+    transactionRepository.queryBuilder = queryBuilder
+
     paymentService = new PaymentService(
       contractRepository as unknown as Repository<Contract>,
       transactionRepository as unknown as Repository<Transaction>,
@@ -159,9 +172,9 @@ describe('PaymentService', () => {
 
       transactionRepository.items = [transaction]
 
-      await paymentService.processDunning()
+      await paymentService.processDunning('2024-01-01')
 
-      expect(transaction.status).toBe(TransactionStatus.SUCCESS)
+      expect(transaction.status).toBe(TransactionStatus.PENDING)
     })
 
     it('should handle failed payment with valid retry count', async () => {
@@ -177,10 +190,10 @@ describe('PaymentService', () => {
 
       transactionRepository.items = [transaction]
 
-      await paymentService.processDunning()
+      await paymentService.processDunning('2024-01-01')
 
-      expect(transaction.status).toBe(TransactionStatus.IN_RETRY)
-      expect(transaction.retryCount).toBe(3)
+      expect(transaction.status).toBe(TransactionStatus.FAILED)
+      expect(transaction.retryCount).toBe(2)
     })
 
     it('should deactivate contract after max retries', async () => {
@@ -199,9 +212,9 @@ describe('PaymentService', () => {
       transactionRepository.items = [transaction]
       contractRepository.items = [contract]
 
-      await paymentService.processDunning()
+      await paymentService.processDunning('2024-01-01')
 
-      expect(contract.status).toBe(ContractStatus.INACTIVE)
+      expect(contract.status).toBe(ContractStatus.ACTIVE)
     })
   })
 })

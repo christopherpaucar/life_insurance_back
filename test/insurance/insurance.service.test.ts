@@ -85,6 +85,17 @@ describe('InsuranceService', () => {
         return { ...data, id: '1' }
       },
       delete: () => Promise.resolve(),
+      createQueryBuilder: () => {
+        const queryBuilder = {
+          leftJoinAndSelect: () => queryBuilder,
+          where: () => queryBuilder,
+          andWhere: () => queryBuilder,
+          getOne: () => Promise.resolve(insuranceRepository.items[0]),
+          getMany: () => Promise.resolve(insuranceRepository.items),
+          getManyAndCount: () => Promise.resolve([insuranceRepository.items, insuranceRepository.items.length]),
+        }
+        return queryBuilder
+      },
       transaction: async (callback: (manager: any) => Promise<any>) => {
         const result = await callback(mockManager)
         if (result) {

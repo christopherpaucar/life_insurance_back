@@ -142,14 +142,12 @@ describe('ReimbursementService', () => {
             type: ReimbursementItemType.MEDICATION,
             serviceDate: '2024-01-01',
             requestedAmount: 100,
-            documentUrl: 'http://example.com/doc1',
           },
           {
             description: 'Test item 2',
             type: ReimbursementItemType.CONSULTATION,
             serviceDate: '2024-01-02',
             requestedAmount: 200,
-            documentUrl: 'http://example.com/doc2',
           },
         ],
       }
