@@ -8,6 +8,7 @@ import { InsuranceModule } from './insurance/insurance.module'
 import { ContractModule } from './contract/contract.module'
 import { ReimbursementModule } from './reimbursement/reimbursement.module'
 import { FileStorageModule } from './common/file-storage.module'
+import { ReportsModule } from './reports/reports.module'
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { FileStorageModule } from './common/file-storage.module'
     ContractModule,
     ReimbursementModule,
     FileStorageModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
